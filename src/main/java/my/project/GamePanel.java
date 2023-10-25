@@ -14,7 +14,7 @@ import javax.swing.JPanel;
 public class GamePanel extends JPanel implements Runnable {
     public static final int WIDTH = 780;
     public static final int HEIGHT = 720;
-    private static final int FPS = 60;
+    public static final int FPS = 60;
 
     private final Thread thread = new Thread(this);
     private final PlayManager playManager = new PlayManager();

@@ -3,6 +3,7 @@ package my.project;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.KeyListener;
+import java.util.StringJoiner;
 import java.awt.BasicStroke;
 
 public class PlayManager {
@@ -18,6 +19,7 @@ public class PlayManager {
     private int framesLimit = 30;
     private int updateCount = 0;
     private boolean gameOver = false;
+    private int gameOverCount = 0;
     private int level = 1;
     private int score = 0;
     private int thingsEaten = 0;
@@ -80,9 +82,19 @@ public class PlayManager {
         graphics.drawString("SCORE: " + score, RIGHT_X + 140, TOP_Y + 160);
 
         if (gameOver) {
-            graphics.setColor(Color.RED);
-            graphics.setFont(graphics.getFont().deriveFont(50f));
-            graphics.drawString("GAME OVER!", LEFT_X + 20, TOP_Y + 320);
+            if (gameOverCount++ < GamePanel.FPS) {
+                graphics.setColor(Color.RED);
+                graphics.setFont(graphics.getFont().deriveFont(50f));
+                graphics.drawString("GAME OVER!", LEFT_X + 20, TOP_Y + 320);
+            }
+            gameOverCount %= GamePanel.FPS * 2;
+        } else {
+            StringJoiner joiner = new StringJoiner(",");
+            for (Direction direction : snake.getMoveBuffer()) {
+                joiner.add(direction.getText());
+            }
+            graphics.setFont(graphics.getFont().deriveFont(20f));
+            graphics.drawString(joiner.toString(), LEFT_X, BOTTOM_Y + 30);
         }
     }
 

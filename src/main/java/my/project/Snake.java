@@ -1,8 +1,10 @@
 package my.project;
 
+import java.util.List;
 import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.stream.Collectors;
 
 public class Snake {
     public static final char SNAKE = '*';
@@ -11,8 +13,8 @@ public class Snake {
     private final PositionSelector positionSelector;
     private final char[][] board;
     private boolean lastMoveGotBigger;
-    BlockingQueue<int[]> blockingQueue = new LinkedBlockingDeque<>();
-    private int[] lastDirection;
+    private final BlockingQueue<Direction> moveBuffer = new LinkedBlockingDeque<>();
+    private Direction lastDirection;
 
     public Snake(int depth, int width) {
         board = new char[depth][width];
@@ -36,17 +38,17 @@ public class Snake {
     public boolean move() {
         lastMoveGotBigger = false;
         int[] head = snake.getLast();
-        int[] direction;
+        Direction direction;
         int multiplier = 1;
-        if (blockingQueue.size() > 0) {
-            direction = blockingQueue.poll();
-            if (lastDirection != null && direction[0] == lastDirection[0] && direction[1] == lastDirection[1]) {
+        if (moveBuffer.size() > 0) {
+            direction = moveBuffer.poll();
+            if (lastDirection != null && direction == lastDirection) {
                 multiplier = 2;
             }
         } else
             direction = lastDirection;
         for (int i = 0; i < multiplier; i++) {
-            int[] newHead = { head[0] + direction[0], head[1] + direction[1] };
+            int[] newHead = { head[0] + direction.getDelta()[0], head[1] + direction.getDelta()[1] };
             if (newHead[0] < 0 || newHead[0] >= board.length || newHead[1] < 0
                     || newHead[1] >= board[newHead[0]].length)
                 return false;
@@ -66,7 +68,7 @@ public class Snake {
             snake.addLast(newHead);
             head = newHead;
         }
-        if (blockingQueue.isEmpty()) {
+        if (moveBuffer.isEmpty()) {
             lastDirection = direction;
         }
         return true;
@@ -78,6 +80,10 @@ public class Snake {
 
     public boolean getLastMoveGotBigger() {
         return lastMoveGotBigger;
+    }
+
+    public List<Direction> getMoveBuffer() {
+        return moveBuffer.stream().collect(Collectors.toList());
     }
 
     public String print() {
@@ -93,19 +99,19 @@ public class Snake {
     }
 
     public void up() {
-        blockingQueue.offer(new int[] { -1, 0 });
+        moveBuffer.offer(Direction.UP);
     }
 
     public void down() {
-        blockingQueue.offer(new int[] { 1, 0 });
+        moveBuffer.offer(Direction.DOWN);
     }
 
     public void right() {
-        blockingQueue.offer(new int[] { 0, 1 });
+        moveBuffer.offer(Direction.RIGHT);
     }
 
     public void left() {
-        blockingQueue.offer(new int[] { 0, -1 });
+        moveBuffer.offer(Direction.LEFT);
     }
 
 }
