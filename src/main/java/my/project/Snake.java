@@ -13,7 +13,7 @@ public class Snake {
     private final LinkedList<int[]> snake = new LinkedList<>();
     private final PositionSelector positionSelector;
     private final char[][] board;
-    private boolean lastMoveGotBigger;
+    private int lastMoveEarnedPoints;
     private final BlockingQueue<Direction> moveBuffer = new LinkedBlockingDeque<>();
     private Direction lastDirection;
 
@@ -37,7 +37,7 @@ public class Snake {
     }
 
     public boolean move() {
-        lastMoveGotBigger = false;
+        lastMoveEarnedPoints = 0;
         int[] head = snake.getLast();
         Direction direction;
         int multiplier = 1;
@@ -66,7 +66,7 @@ public class Snake {
                 board[newHead[0]][newHead[1]] = SWALLOWED;
                 int[] plus = positionSelector.randomUnoccupiedPosition();
                 board[plus[0]][plus[1]] = PLUS;
-                lastMoveGotBigger = true;
+                lastMoveEarnedPoints += multiplier;
             }
             snake.addLast(newHead);
             head = newHead;
@@ -81,8 +81,8 @@ public class Snake {
         return board;
     }
 
-    public boolean getLastMoveGotBigger() {
-        return lastMoveGotBigger;
+    public int getLastMovePoints() {
+        return lastMoveEarnedPoints;
     }
 
     public List<Direction> getMoveBuffer() {

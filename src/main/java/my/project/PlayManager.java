@@ -38,9 +38,9 @@ public class PlayManager {
                 System.out.println(snake.print());
                 if (!stillPlaying)
                     gameOver = true;
-                if (snake.getLastMoveGotBigger()) {
+                if (snake.getLastMovePoints() > 0) {
                     thingsEaten++;
-                    score += level;
+                    score += level * snake.getLastMovePoints();
                     if (thingsEaten % 5 == 0) {
                         level++;
                         framesLimit--;
@@ -59,18 +59,18 @@ public class PlayManager {
         char[][] board = snake.getBoard();
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[i].length; j++) {
-                int x = LEFT_X + j * Block.SIZE + 2;
-                int y = TOP_Y + i * Block.SIZE + 2;
-                int width = Block.SIZE - 4;
+                int x = LEFT_X + j * Block.SIZE + 3;
+                int y = TOP_Y + i * Block.SIZE + 3;
+                int width = Block.SIZE - 6;
                 if (board[i][j] == Snake.SNAKE) {
-                    graphics.setColor(Color.WHITE);
+                    graphics.setColor(Color.GREEN);
                     graphics.fillRect(x, y, width, width);
                 } else if (board[i][j] == Snake.PLUS) {
                     graphics.setColor(Color.RED);
-                    graphics.fillRect(x, y, width, width);
+                    graphics.fillRect(x - 3, y - 3, Block.SIZE, Block.SIZE);
                 } else if (board[i][j] == Snake.SWALLOWED) {
                     graphics.setColor(Color.DARK_GRAY);
-                    graphics.fillRect(x - 2, y - 2, Block.SIZE, Block.SIZE);
+                    graphics.fillRect(x - 3, y - 3, Block.SIZE, Block.SIZE);
                 }
             }
 
