@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 public class Snake {
     public static final char SNAKE = '*';
     public static final char PLUS = '+';
+    public static final char SWALLOWED = 'O';
     private final LinkedList<int[]> snake = new LinkedList<>();
     private final PositionSelector positionSelector;
     private final char[][] board;
@@ -40,10 +41,11 @@ public class Snake {
         int[] head = snake.getLast();
         Direction direction;
         int multiplier = 1;
-        if (moveBuffer.size() > 0) {
+        if (!moveBuffer.isEmpty()) {
             direction = moveBuffer.poll();
-            if (lastDirection != null && direction == lastDirection) {
-                multiplier = 2;
+            while (!moveBuffer.isEmpty() && moveBuffer.peek() == direction) {
+                moveBuffer.poll();
+                multiplier++;
             }
         } else
             direction = lastDirection;
@@ -59,12 +61,13 @@ public class Snake {
                 int[] oldTail = snake.removeFirst();
                 board[oldTail[0]][oldTail[1]] = ' ';
                 positionSelector.unoccupy(oldTail);
+                board[newHead[0]][newHead[1]] = SNAKE;
             } else {
+                board[newHead[0]][newHead[1]] = SWALLOWED;
                 int[] plus = positionSelector.randomUnoccupiedPosition();
                 board[plus[0]][plus[1]] = PLUS;
                 lastMoveGotBigger = true;
             }
-            board[newHead[0]][newHead[1]] = SNAKE;
             snake.addLast(newHead);
             head = newHead;
         }
