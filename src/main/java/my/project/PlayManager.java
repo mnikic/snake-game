@@ -16,6 +16,7 @@ public class PlayManager {
     private static int BOTTOM_Y = TOP_Y + HEIGHT;
     private final Snake snake;
     private final KeyHandler keyHandler;
+    private static final Color GREEN = new Color(0, 135, 62, 200);
     private int framesLimit = 30;
     private int updateCount = 0;
     private boolean gameOver = false;
@@ -63,7 +64,7 @@ public class PlayManager {
                 int y = TOP_Y + i * Block.SIZE + 3;
                 int width = Block.SIZE - 6;
                 if (board[i][j] == Snake.SNAKE) {
-                    graphics.setColor(Color.GREEN);
+                    graphics.setColor(GREEN);
                     graphics.fillRect(x, y, width, width);
                 } else if (board[i][j] == Snake.PLUS) {
                     graphics.setColor(Color.RED);
