@@ -17,10 +17,7 @@ public class PositionSelector {
         limit = this.height * this.width - 1;
         positions = new int[limit + 1];
         index = new int[limit + 1];
-        for (int i = 0; i <= limit; i++) {
-            positions[i] = i;
-            index[i] = i;
-        }
+        init();
     }
 
     public boolean occupy(int[] position) {
@@ -47,6 +44,17 @@ public class PositionSelector {
         int position = random.nextInt(limit + 1);
         int[] result = new int[] { positions[position] / width, positions[position] % width };
         return result;
+    }
+
+    public void reset() {
+        init();
+    }
+
+    private void init() {
+        for (int i = 0; i <= limit; i++) {
+            positions[i] = i;
+            index[i] = i;
+        }
     }
 
     private void swapPos(int pos1, int pos2) {

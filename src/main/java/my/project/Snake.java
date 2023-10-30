@@ -10,34 +10,24 @@ public class Snake {
     public static final char SNAKE = '*';
     public static final char PLUS = '+';
     public static final char SWALLOWED = 'O';
+
+    private final int depth, width;
     private final LinkedList<int[]> snake = new LinkedList<>();
     private final PositionSelector positionSelector;
     private final char[][] board;
-    private int lastMoveEarnedPoints;
     private final BlockingQueue<Direction> moveBuffer = new LinkedBlockingDeque<>();
     private Direction lastDirection;
 
     public Snake(int depth, int width) {
+        this.depth = depth;
+        this.width = width;
         board = new char[depth][width];
-        int[] head = new int[] { depth / 2, width / 2 };
         positionSelector = new PositionSelector(depth, width);
-        for (int i = 0; i < board.length; i++) {
-            for (int j = 0; j < board[i].length; j++) {
-                if (i == head[0] && j == head[1]) {
-                    snake.addLast(new int[] { i, j });
-                    board[i][j] = SNAKE;
-                    positionSelector.occupy(new int[] { i, j });
-                } else
-                    board[i][j] = ' ';
-            }
-        }
-        int[] plus = positionSelector.randomUnoccupiedPosition();
-        board[plus[0]][plus[1]] = PLUS;
-        right();
+        init();
     }
 
-    public boolean move() {
-        lastMoveEarnedPoints = 0;
+    public Move move() {
+        boolean points = false;
         int[] head = snake.getLast();
         Direction direction;
         int multiplier = 1;
@@ -52,10 +42,8 @@ public class Snake {
         for (int i = 0; i < multiplier; i++) {
             int[] newHead = { head[0] + direction.getDelta()[0], head[1] + direction.getDelta()[1] };
             if (newHead[0] < 0 || newHead[0] >= board.length || newHead[1] < 0
-                    || newHead[1] >= board[newHead[0]].length)
-                return false;
-            if (board[newHead[0]][newHead[1]] == SNAKE)
-                return false;
+                    || newHead[1] >= board[newHead[0]].length || board[newHead[0]][newHead[1]] == SNAKE)
+                return new Move(false, multiplier, false);
             positionSelector.occupy(newHead);
             if (board[newHead[0]][newHead[1]] != PLUS) {
                 int[] oldTail = snake.removeFirst();
@@ -66,7 +54,7 @@ public class Snake {
                 board[newHead[0]][newHead[1]] = SWALLOWED;
                 int[] plus = positionSelector.randomUnoccupiedPosition();
                 board[plus[0]][plus[1]] = PLUS;
-                lastMoveEarnedPoints += multiplier;
+                points = true;
             }
             snake.addLast(newHead);
             head = newHead;
@@ -74,15 +62,37 @@ public class Snake {
         if (moveBuffer.isEmpty()) {
             lastDirection = direction;
         }
-        return true;
+        return new Move(true, multiplier, points);
+    }
+
+    public void reset() {
+        positionSelector.reset();
+        snake.clear();
+        moveBuffer.clear();
+        lastDirection = null;
+        init();
+    }
+
+    private void init() {
+        int[] head = new int[] { depth / 2, width / 2 };
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (i == head[0] && j == head[1]) {
+                    snake.addLast(new int[] { i, j });
+                    board[i][j] = SNAKE;
+                    positionSelector.occupy(new int[] { i, j });
+                } else
+                    board[i][j] = ' ';
+            }
+        }
+        int[] plus = positionSelector.randomUnoccupiedPosition();
+        board[plus[0]][plus[1]] = PLUS;
+        right();
+
     }
 
     public char[][] getBoard() {
         return board;
-    }
-
-    public int getLastMovePoints() {
-        return lastMoveEarnedPoints;
     }
 
     public List<Direction> getMoveBuffer() {
@@ -117,4 +127,27 @@ public class Snake {
         moveBuffer.offer(Direction.LEFT);
     }
 
+    public static final class Move {
+        private final boolean alive;
+        private final int distance;
+        private final boolean eaten;
+
+        private Move(boolean alive, int distance, boolean eaten) {
+            this.alive = alive;
+            this.distance = distance;
+            this.eaten = eaten;
+        }
+
+        public boolean isAlive() {
+            return alive;
+        }
+
+        public boolean eaten() {
+            return eaten;
+        }
+
+        public int distance() {
+            return distance;
+        }
+    }
 }

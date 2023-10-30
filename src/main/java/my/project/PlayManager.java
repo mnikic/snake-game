@@ -2,7 +2,6 @@ package my.project;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.event.KeyListener;
 import java.util.StringJoiner;
 import java.awt.BasicStroke;
 
@@ -14,20 +13,21 @@ public class PlayManager {
     private static int RIGHT_X = LEFT_X + WIDTH;
     private static int TOP_Y = 50;
     private static int BOTTOM_Y = TOP_Y + HEIGHT;
-    private final Snake snake;
-    private final KeyHandler keyHandler;
     private static final Color GREEN = new Color(0, 135, 62, 200);
-    private int framesLimit = 30;
-    private int updateCount = 0;
-    private boolean gameOver = false;
-    private int gameOverCount = 0;
-    private int level = 1;
-    private int score = 0;
-    private int thingsEaten = 0;
+
+    // Game state
+    private final Snake snake;
+    private int framesLimit;
+    private int updateCount;
+    private boolean gameOver;
+    private int gameOverCount;
+    private int level;
+    private int score;
+    private int thingsEaten;
 
     public PlayManager() {
         snake = new Snake(20, 12);
-        keyHandler = new KeyHandler(snake);
+        init();
     }
 
     public void update() {
@@ -35,18 +35,24 @@ public class PlayManager {
             updateCount++;
             if (updateCount == framesLimit) {
                 updateCount = 0;
-                boolean stillPlaying = snake.move();
+                Snake.Move move = snake.move();
                 System.out.println(snake.print());
-                if (!stillPlaying)
+                if (!move.isAlive()) {
                     gameOver = true;
-                if (snake.getLastMovePoints() > 0) {
+                    GamePanel.SOUNDS.play(3, false);
+                } else if (move.eaten()) {
                     thingsEaten++;
-                    score += level * snake.getLastMovePoints();
+                    GamePanel.SOUNDS.play(0, false);
+                    score += level * move.distance();
                     if (thingsEaten % 5 == 0) {
                         level++;
                         framesLimit--;
                         framesLimit = Math.max(5, framesLimit);
                     }
+                } else if (move.distance() == 1) {
+                    GamePanel.SOUNDS.play(2, false);
+                } else {
+                    GamePanel.SOUNDS.play(1, false);
                 }
             }
         }
@@ -81,8 +87,9 @@ public class PlayManager {
         graphics.setFont(graphics.getFont().deriveFont(30f));
         // draw score and level etc.
         graphics.drawRect(RIGHT_X + 100, TOP_Y, 250, 250);
-        graphics.drawString("LEVEL: " + level, RIGHT_X + 140, TOP_Y + 90);
-        graphics.drawString("SCORE: " + score, RIGHT_X + 140, TOP_Y + 160);
+        graphics.drawString("LEVEL: " + level, RIGHT_X + 140, TOP_Y + 70);
+        graphics.drawString("SCORE: " + score, RIGHT_X + 140, TOP_Y + 140);
+        graphics.drawString("EATEN: " + thingsEaten, RIGHT_X + 140, TOP_Y + 210);
 
         if (gameOver) {
             if (gameOverCount++ < GamePanel.FPS) {
@@ -91,6 +98,11 @@ public class PlayManager {
                 graphics.drawString("GAME OVER!", LEFT_X + 20, TOP_Y + 320);
             }
             gameOverCount %= GamePanel.FPS * 2;
+
+            graphics.setColor(Color.WHITE);
+            graphics.setFont(graphics.getFont().deriveFont(30f));
+            graphics.drawString("SPACE to start!", RIGHT_X + 100, TOP_Y + 350);
+            graphics.drawString("Esc to quit.", RIGHT_X + 100, TOP_Y + 400);
         } else {
             StringJoiner joiner = new StringJoiner(",");
             for (Direction direction : snake.getMoveBuffer()) {
@@ -101,7 +113,36 @@ public class PlayManager {
         }
     }
 
-    public KeyListener getKeyListener() {
-        return keyHandler;
+    public void up() {
+        snake.up();
+    }
+
+    public void down() {
+        snake.down();
+    }
+
+    public void left() {
+        snake.left();
+    }
+
+    public void right() {
+        snake.right();
+    }
+
+    public void maybeReset() {
+        if (gameOver) {
+            snake.reset();
+            init();
+        }
+    }
+
+    private void init() {
+        framesLimit = 30;
+        updateCount = 0;
+        gameOver = false;
+        gameOverCount = 0;
+        level = 1;
+        score = 0;
+        thingsEaten = 0;
     }
 }

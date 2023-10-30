@@ -16,6 +16,9 @@ public class GamePanel extends JPanel implements Runnable {
     public static final int HEIGHT = 720;
     public static final int FPS = 60;
 
+    public static final Sound MUSIC = new Sound();
+    public static final Sound SOUNDS = new Sound();
+
     private final Thread thread = new Thread(this);
     private final PlayManager playManager = new PlayManager();
 
@@ -23,12 +26,15 @@ public class GamePanel extends JPanel implements Runnable {
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
         this.setBackground(Color.BLACK);
         this.setLayout(null);
-        this.addKeyListener(playManager.getKeyListener());
+        this.addKeyListener(new KeyHandler(playManager));
         this.setFocusable(true);
     }
 
     public void launchGame() {
         thread.run();
+
+        // music.play(0, true);
+        // music.loop();
     }
 
     @Override

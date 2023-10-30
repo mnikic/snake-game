@@ -4,10 +4,10 @@ import java.awt.event.KeyEvent;
 
 public class KeyHandler implements java.awt.event.KeyListener {
 
-    private final Snake snake;
+    private final PlayManager playManager;
 
-    public KeyHandler(Snake snake) {
-        this.snake = snake;
+    public KeyHandler(PlayManager playManager) {
+        this.playManager = playManager;
     }
 
     @Override
@@ -18,13 +18,17 @@ public class KeyHandler implements java.awt.event.KeyListener {
     public void keyPressed(KeyEvent event) {
         int code = event.getKeyCode();
         if (code == KeyEvent.VK_UP || code == KeyEvent.VK_W) {
-            snake.up();
+            playManager.up();
         } else if (code == KeyEvent.VK_DOWN || code == KeyEvent.VK_S) {
-            snake.down();
+            playManager.down();
         } else if (code == KeyEvent.VK_LEFT || code == KeyEvent.VK_A) {
-            snake.left();
+            playManager.left();
         } else if (code == KeyEvent.VK_RIGHT || code == KeyEvent.VK_D) {
-            snake.right();
+            playManager.right();
+        } else if (code == KeyEvent.VK_ESCAPE || code == KeyEvent.VK_Q) {
+            System.exit(0);
+        } else if (code == KeyEvent.VK_SPACE) {
+            playManager.maybeReset();
         }
     }
 
