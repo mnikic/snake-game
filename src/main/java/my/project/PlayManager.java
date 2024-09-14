@@ -42,7 +42,16 @@ public class PlayManager {
                     GamePanel.SOUNDS.play(3, false);
                 } else if (move.eaten()) {
                     thingsEaten++;
-                    GamePanel.SOUNDS.play(0, false);
+                    switch (move.distance()) {
+                        case 1:
+                            GamePanel.SOUNDS.play(0, false);   
+                            break;
+                        case 2:
+                            GamePanel.SOUNDS.play(4, false);
+                            break;
+                        default:
+                            GamePanel.SOUNDS.play(5, false);
+                    }
                     score += level * move.distance();
                     if (thingsEaten % 5 == 0) {
                         level++;

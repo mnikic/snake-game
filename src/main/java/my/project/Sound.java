@@ -8,7 +8,7 @@ import javax.sound.sampled.AudioInputStream;
 public class Sound {
     private Clip musicClip;
     private static final String[] SOUND_FILE_NAMES = { "beep-6-96243.wav",
-            "jump.wav", "move.wav", "game-over.wav" };
+        "jump.wav", "move.wav", "game-over.wav", "hit.wav", "big-hit.wav"};
 
     public void play(int number, boolean music) {
         try {
