@@ -7,10 +7,6 @@ import java.awt.Graphics2D;
 
 import javax.swing.JPanel;
 
-/**
- * Hello world!
- *
- */
 public class GamePanel extends JPanel implements Runnable {
     public static final int WIDTH = 780;
     public static final int HEIGHT = 720;
@@ -32,9 +28,6 @@ public class GamePanel extends JPanel implements Runnable {
 
     public void launchGame() {
         thread.run();
-
-        // music.play(0, true);
-        // music.loop();
     }
 
     @Override
@@ -65,7 +58,6 @@ public class GamePanel extends JPanel implements Runnable {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D twoDGraphics = (Graphics2D) g;
-        playManager.draw(twoDGraphics);
+        playManager.draw((Graphics2D) g);
     }
 }

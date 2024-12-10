@@ -16,6 +16,10 @@ public class KeyHandler implements java.awt.event.KeyListener {
 
     @Override
     public void keyPressed(KeyEvent event) {
+    }
+
+    @Override
+    public void keyReleased(KeyEvent event) {
         int code = event.getKeyCode();
         if (code == KeyEvent.VK_UP || code == KeyEvent.VK_W) {
             playManager.up();
@@ -31,8 +35,5 @@ public class KeyHandler implements java.awt.event.KeyListener {
             playManager.maybeReset();
         }
     }
-
-    @Override
-    public void keyReleased(KeyEvent event) {
-    }
+    
 }

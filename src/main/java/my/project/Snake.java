@@ -33,7 +33,7 @@ public class Snake {
         int multiplier = 1;
         if (!moveBuffer.isEmpty()) {
             direction = moveBuffer.poll();
-            while (!moveBuffer.isEmpty() && moveBuffer.peek() == direction) {
+            while (!moveBuffer.isEmpty() && moveBuffer.peek() == direction && multiplier < 5) {
                 moveBuffer.poll();
                 multiplier++;
             }
@@ -88,7 +88,6 @@ public class Snake {
         int[] plus = positionSelector.randomUnoccupiedPosition();
         board[plus[0]][plus[1]] = PLUS;
         right();
-
     }
 
     public char[][] getBoard() {
