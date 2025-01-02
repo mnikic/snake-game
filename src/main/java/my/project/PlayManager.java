@@ -84,9 +84,12 @@ public class PlayManager {
                 } else if (board[i][j] == Snake.PLUS) {
                     graphics.setColor(Color.RED);
                     graphics.fillRect(x - 3, y - 3, Block.SIZE, Block.SIZE);
-                } else if (board[i][j] == Snake.SWALLOWED) {
+                } else if (board[i][j] >= 48 && board[i][j] < 60){
                     graphics.setColor(Color.DARK_GRAY);
                     graphics.fillRect(x - 3, y - 3, Block.SIZE, Block.SIZE);
+                    graphics.setColor(Color.WHITE);
+                    graphics.setFont(graphics.getFont().deriveFont(30f));
+                    graphics.drawString(""+(board[i][j] - 48)+"x", x - 3, y - 3);
                 }
             }
 

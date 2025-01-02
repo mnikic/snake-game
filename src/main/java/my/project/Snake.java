@@ -33,16 +33,17 @@ public class Snake {
         int multiplier = 1;
         if (!moveBuffer.isEmpty()) {
             direction = moveBuffer.poll();
-            while (!moveBuffer.isEmpty() && moveBuffer.peek() == direction && multiplier < 5) {
+            while (!moveBuffer.isEmpty() && moveBuffer.peek() == direction) {
                 moveBuffer.poll();
                 multiplier++;
             }
         } else
             direction = lastDirection;
+        int eatenAt = 0;
         for (int i = 0; i < multiplier; i++) {
             int[] newHead = { head[0] + direction.getDelta()[0], head[1] + direction.getDelta()[1] };
             if (newHead[0] < 0 || newHead[0] >= board.length || newHead[1] < 0
-                    || newHead[1] >= board[newHead[0]].length || board[newHead[0]][newHead[1]] == SNAKE)
+                    || newHead[1] >= board[newHead[0]].length || board[newHead[0]][newHead[1]] == SNAKE || board[newHead[0]][newHead[1]] > 47)
                 return new Move(false, multiplier, false);
             positionSelector.occupy(newHead);
             if (board[newHead[0]][newHead[1]] != PLUS) {
@@ -51,7 +52,8 @@ public class Snake {
                 positionSelector.unoccupy(oldTail);
                 board[newHead[0]][newHead[1]] = SNAKE;
             } else {
-                board[newHead[0]][newHead[1]] = SWALLOWED;
+                eatenAt = i;
+                board[newHead[0]][newHead[1]] = (char)(multiplier - eatenAt + 48);
                 int[] plus = positionSelector.randomUnoccupiedPosition();
                 board[plus[0]][plus[1]] = PLUS;
                 points = true;
@@ -62,7 +64,7 @@ public class Snake {
         if (moveBuffer.isEmpty()) {
             lastDirection = direction;
         }
-        return new Move(true, multiplier, points);
+        return new Move(true, multiplier - eatenAt, points);
     }
 
     public void reset() {
@@ -88,6 +90,7 @@ public class Snake {
         int[] plus = positionSelector.randomUnoccupiedPosition();
         board[plus[0]][plus[1]] = PLUS;
         right();
+
     }
 
     public char[][] getBoard() {
