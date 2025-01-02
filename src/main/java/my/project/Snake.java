@@ -10,7 +10,7 @@ public class Snake {
     public static final char SNAKE = '*';
     public static final char PLUS = '+';
     public static final char SWALLOWED = 'O';
-    public static final char DEAD = 'O';
+    public static final char DEAD = 'X';
 
     private final int depth, width;
     private final LinkedList<int[]> snake = new LinkedList<>();
