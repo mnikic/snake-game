@@ -10,6 +10,7 @@ public class Snake {
     public static final char SNAKE = '*';
     public static final char PLUS = '+';
     public static final char SWALLOWED = 'O';
+    public static final char DEAD = 'O';
 
     private final int depth, width;
     private final LinkedList<int[]> snake = new LinkedList<>();
@@ -43,8 +44,13 @@ public class Snake {
         for (int i = 0; i < multiplier; i++) {
             int[] newHead = { head[0] + direction.getDelta()[0], head[1] + direction.getDelta()[1] };
             if (newHead[0] < 0 || newHead[0] >= board.length || newHead[1] < 0
-                    || newHead[1] >= board[newHead[0]].length || board[newHead[0]][newHead[1]] == SNAKE || board[newHead[0]][newHead[1]] > 47)
+                    || newHead[1] >= board[newHead[0]].length) {
                 return new Move(false, multiplier, false);
+            }
+            if (board[newHead[0]][newHead[1]] == SNAKE || board[newHead[0]][newHead[1]] > 47) {
+                board[newHead[0]][newHead[1]] = DEAD;
+                return new Move(false, multiplier, false);
+            }
             positionSelector.occupy(newHead);
             if (board[newHead[0]][newHead[1]] != PLUS) {
                 int[] oldTail = snake.removeFirst();

@@ -91,6 +91,9 @@ public class PlayManager {
                     graphics.setColor(Color.WHITE);
                     graphics.setFont(graphics.getFont().deriveFont(30f));
                     graphics.drawString(""+(board[i][j] - 48)+"x", x - 3, y - 3);
+                } else if (board[i][j] == Snake.DEAD) {
+                    graphics.setColor(Color.BLUE);
+                    graphics.fillRect(x - 3, y - 3, Block.SIZE, Block.SIZE);
                 }
             }
 
