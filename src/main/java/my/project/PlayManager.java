@@ -117,7 +117,14 @@ public class PlayManager {
                 graphics.drawString("SPACE to start!", RIGHT_X + 100, TOP_Y + 350);
                 graphics.drawString("Esc to quit.", RIGHT_X + 100, TOP_Y + 400);
             } else {
-                graphics.setColor(Color.WHITE);
+                if (gameOverCount++ * 3 < GamePanel.FPS) 
+                    graphics.setColor(Color.WHITE);
+                else if (gameOverCount * 3 < GamePanel.FPS * 2)
+                    graphics.setColor(Color.YELLOW);
+                else
+                    graphics.setColor(Color.GREEN);
+
+                gameOverCount %= GamePanel.FPS;
                 graphics.setFont(graphics.getFont().deriveFont(35f));
                 graphics.drawString("SPACE to start!", LEFT_X + 45, TOP_Y + 120);
                 graphics.drawString("Esc to quit.", LEFT_X + 45, TOP_Y + 170);
