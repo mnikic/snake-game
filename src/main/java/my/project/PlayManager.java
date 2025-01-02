@@ -19,8 +19,9 @@ public class PlayManager {
     private final Snake snake;
     private int framesLimit;
     private int updateCount;
-    private boolean gameOver;
     private int gameOverCount;
+    private boolean gameOver;
+    private boolean firstStart = true;
     private int level;
     private int score;
     private int thingsEaten;
@@ -31,7 +32,7 @@ public class PlayManager {
     }
 
     public void update() {
-        if (!gameOver) {
+        if (!gameOver && !firstStart) {
             updateCount++;
             if (updateCount == framesLimit) {
                 updateCount = 0;
@@ -103,18 +104,25 @@ public class PlayManager {
         graphics.drawString("SCORE: " + score, RIGHT_X + 140, TOP_Y + 140);
         graphics.drawString("EATEN: " + thingsEaten, RIGHT_X + 140, TOP_Y + 210);
 
-        if (gameOver) {
-            if (gameOverCount++ < GamePanel.FPS) {
-                graphics.setColor(Color.RED);
-                graphics.setFont(graphics.getFont().deriveFont(50f));
-                graphics.drawString("GAME OVER!", LEFT_X + 20, TOP_Y + 320);
+        if (gameOver || firstStart) {
+            if (gameOver) {
+                if (gameOverCount++ < GamePanel.FPS) {
+                    graphics.setColor(Color.RED);
+                    graphics.setFont(graphics.getFont().deriveFont(50f));
+                    graphics.drawString("GAME OVER!", LEFT_X + 20, TOP_Y + 320);
+                }
+                gameOverCount %= GamePanel.FPS * 2;
+                graphics.setColor(Color.WHITE);
+                graphics.setFont(graphics.getFont().deriveFont(30f));
+                graphics.drawString("SPACE to start!", RIGHT_X + 100, TOP_Y + 350);
+                graphics.drawString("Esc to quit.", RIGHT_X + 100, TOP_Y + 400);
+            } else {
+                graphics.setColor(Color.WHITE);
+                graphics.setFont(graphics.getFont().deriveFont(35f));
+                graphics.drawString("SPACE to start!", LEFT_X + 45, TOP_Y + 120);
+                graphics.drawString("Esc to quit.", LEFT_X + 45, TOP_Y + 170);
             }
-            gameOverCount %= GamePanel.FPS * 2;
 
-            graphics.setColor(Color.WHITE);
-            graphics.setFont(graphics.getFont().deriveFont(30f));
-            graphics.drawString("SPACE to start!", RIGHT_X + 100, TOP_Y + 350);
-            graphics.drawString("Esc to quit.", RIGHT_X + 100, TOP_Y + 400);
         } else {
             StringJoiner joiner = new StringJoiner(",");
             for (Direction direction : snake.getMoveBuffer()) {
@@ -142,7 +150,9 @@ public class PlayManager {
     }
 
     public void maybeReset() {
-        if (gameOver) {
+        if (firstStart) {
+            firstStart = false;
+        } else if (gameOver) {
             snake.reset();
             init();
         }
