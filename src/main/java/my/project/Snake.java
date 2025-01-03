@@ -22,7 +22,7 @@ public class Snake {
     public Snake(int depth, int width) {
         this.depth = depth;
         this.width = width;
-        board = new char[depth][width];
+        board = new char[depth + 2][width + 2];
         positionSelector = new PositionSelector(depth, width);
         init();
     }
@@ -43,25 +43,26 @@ public class Snake {
         int eatenAt = 0;
         for (int i = 0; i < multiplier; i++) {
             int[] newHead = { head[0] + direction.getDelta()[0], head[1] + direction.getDelta()[1] };
-            if (newHead[0] < 0 || newHead[0] >= board.length || newHead[1] < 0
-                    || newHead[1] >= board[newHead[0]].length) {
+            if (newHead[0] < 1 || newHead[0] >= board.length - 1 || newHead[1] < 1
+                    || newHead[1] >= board[newHead[0]].length - 1) {
+                board[newHead[0]][newHead[1]] = DEAD;
                 return new Move(false, multiplier, false);
             }
             if (board[newHead[0]][newHead[1]] == SNAKE || board[newHead[0]][newHead[1]] > 47) {
                 board[newHead[0]][newHead[1]] = DEAD;
                 return new Move(false, multiplier, false);
             }
-            positionSelector.occupy(newHead);
+            positionSelector.occupy(new int[]{newHead[0] - 1,newHead[1] - 1});
             if (board[newHead[0]][newHead[1]] != PLUS) {
                 int[] oldTail = snake.removeFirst();
                 board[oldTail[0]][oldTail[1]] = ' ';
-                positionSelector.unoccupy(oldTail);
+                positionSelector.unoccupy(new int[]{oldTail[0] - 1, oldTail[1] - 1});
                 board[newHead[0]][newHead[1]] = SNAKE;
             } else {
                 eatenAt = i;
                 board[newHead[0]][newHead[1]] = (char)(multiplier - eatenAt + 48);
                 int[] plus = positionSelector.randomUnoccupiedPosition();
-                board[plus[0]][plus[1]] = PLUS;
+                board[plus[0] + 1][plus[1] + 1] = PLUS;
                 points = true;
             }
             snake.addLast(newHead);
@@ -88,13 +89,13 @@ public class Snake {
                 if (i == head[0] && j == head[1]) {
                     snake.addLast(new int[] { i, j });
                     board[i][j] = SNAKE;
-                    positionSelector.occupy(new int[] { i, j });
+                    positionSelector.occupy(new int[] { i - 1, j - 1 });
                 } else
                     board[i][j] = ' ';
             }
         }
         int[] plus = positionSelector.randomUnoccupiedPosition();
-        board[plus[0]][plus[1]] = PLUS;
+        board[plus[0] + 1][plus[1] + 1] = PLUS;
         right();
 
     }

@@ -37,7 +37,7 @@ public class PlayManager {
             if (updateCount == framesLimit) {
                 updateCount = 0;
                 Snake.Move move = snake.move();
-                System.out.println(snake.print());
+                //System.out.println(snake.print());
                 if (!move.isAlive()) {
                     gameOver = true;
                     GamePanel.SOUNDS.play(3, false);
@@ -76,8 +76,8 @@ public class PlayManager {
         char[][] board = snake.getBoard();
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[i].length; j++) {
-                int x = LEFT_X + j * Block.SIZE + 3;
-                int y = TOP_Y + i * Block.SIZE + 3;
+                int x = LEFT_X + (j - 1) * Block.SIZE + 3;
+                int y = TOP_Y + (i - 1) * Block.SIZE + 3;
                 int width = Block.SIZE - 6;
                 if (board[i][j] == Snake.SNAKE) {
                     graphics.setColor(GREEN);
