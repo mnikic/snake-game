@@ -13,7 +13,8 @@ public class PlayManager {
     private static int RIGHT_X = LEFT_X + WIDTH;
     private static int TOP_Y = 50;
     private static int BOTTOM_Y = TOP_Y + HEIGHT;
-    private static final Color GREEN = new Color(0, 135, 62, 200);
+    private static final Color GREEN = Color.GREEN;
+    private static final Color DARK_GREEN = new Color(0, 135, 62, 200);
 
     // Game state
     private final Snake snake;
@@ -37,7 +38,7 @@ public class PlayManager {
             if (updateCount == framesLimit) {
                 updateCount = 0;
                 Snake.Move move = snake.move();
-                //System.out.println(snake.print());
+                System.out.println(snake.print());
                 if (!move.isAlive()) {
                     gameOver = true;
                     GamePanel.SOUNDS.play(3, false);
@@ -79,7 +80,10 @@ public class PlayManager {
                 int x = LEFT_X + (j - 1) * Block.SIZE + 3;
                 int y = TOP_Y + (i - 1) * Block.SIZE + 3;
                 int width = Block.SIZE - 6;
-                if (board[i][j] == Snake.SNAKE) {
+                if (board[i][j] == Snake.HEAD) {
+                    graphics.setColor(DARK_GREEN);
+                    graphics.fillRect(x, y, width, width);
+                } else if (board[i][j] == Snake.SNAKE) {
                     graphics.setColor(GREEN);
                     graphics.fillRect(x, y, width, width);
                 } else if (board[i][j] == Snake.PLUS) {
