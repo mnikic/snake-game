@@ -48,9 +48,9 @@ public class Snake {
                     || newHead[1] >= board[newHead[0]].length - 1 || board[newHead[0]][newHead[1]] == SNAKE 
             || board[newHead[0]][newHead[1]] > 47) {
                 board[newHead[0]][newHead[1]] = DEAD;
-                flipOldHead(head);
                 int[] oldTail = snake.removeFirst();
                 board[oldTail[0]][oldTail[1]] = ' ';
+                flipOldHead(head);
                 return new Move(false, multiplier, false);
             }
             positionSelector.occupy(new int[]{newHead[0] - 1,newHead[1] - 1});
@@ -58,15 +58,15 @@ public class Snake {
                 int[] oldTail = snake.removeFirst();
                 positionSelector.unoccupy(new int[]{oldTail[0] - 1, oldTail[1] - 1});
                 board[newHead[0]][newHead[1]] = HEAD;
-                flipOldHead(head);
                 board[oldTail[0]][oldTail[1]] = ' ';
+                flipOldHead(head);
             } else {
                 eatenAt = i;
                 board[newHead[0]][newHead[1]] = (char)(multiplier - eatenAt + 48);
                 int[] plus = positionSelector.randomUnoccupiedPosition();
                 board[plus[0] + 1][plus[1] + 1] = PLUS;
-                scored = true;
                 flipOldHead(head);
+                scored = true;
             }
             snake.addLast(newHead);
             head = newHead;
