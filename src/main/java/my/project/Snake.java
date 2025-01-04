@@ -29,7 +29,7 @@ public class Snake {
     }
 
     public Move move() {
-        boolean points = false;
+        boolean scored = false;
         int[] head = snake.getLast();
         Direction direction;
         int multiplier = 1;
@@ -48,6 +48,9 @@ public class Snake {
                     || newHead[1] >= board[newHead[0]].length - 1 || board[newHead[0]][newHead[1]] == SNAKE 
             || board[newHead[0]][newHead[1]] > 47) {
                 board[newHead[0]][newHead[1]] = DEAD;
+                flipOldHead(head);
+                int[] oldTail = snake.removeFirst();
+                board[oldTail[0]][oldTail[1]] = ' ';
                 return new Move(false, multiplier, false);
             }
             positionSelector.occupy(new int[]{newHead[0] - 1,newHead[1] - 1});
@@ -55,17 +58,15 @@ public class Snake {
                 int[] oldTail = snake.removeFirst();
                 positionSelector.unoccupy(new int[]{oldTail[0] - 1, oldTail[1] - 1});
                 board[newHead[0]][newHead[1]] = HEAD;
-                if (board[head[0]][head[1]] == HEAD)
-                    board[head[0]][head[1]] = SNAKE;
+                flipOldHead(head);
                 board[oldTail[0]][oldTail[1]] = ' ';
             } else {
                 eatenAt = i;
                 board[newHead[0]][newHead[1]] = (char)(multiplier - eatenAt + 48);
                 int[] plus = positionSelector.randomUnoccupiedPosition();
                 board[plus[0] + 1][plus[1] + 1] = PLUS;
-                points = true;
-                 if (board[head[0]][head[1]] == HEAD)
-                    board[head[0]][head[1]] = SNAKE;
+                scored = true;
+                flipOldHead(head);
             }
             snake.addLast(newHead);
             head = newHead;
@@ -73,7 +74,12 @@ public class Snake {
         if (moveBuffer.isEmpty()) {
             lastDirection = direction;
         }
-        return new Move(true, multiplier - eatenAt, points);
+        return new Move(true, multiplier - eatenAt, scored);
+    }
+
+    private void flipOldHead(int[] head) {
+        if (board[head[0]][head[1]] == HEAD)
+            board[head[0]][head[1]] = SNAKE;
     }
 
     public void reset() {

@@ -38,7 +38,7 @@ public class PlayManager {
             if (updateCount == framesLimit) {
                 updateCount = 0;
                 Snake.Move move = snake.move();
-                System.out.println(snake.print());
+                //System.out.println(snake.print());
                 if (!move.isAlive()) {
                     gameOver = true;
                     GamePanel.SOUNDS.play(3, false);
