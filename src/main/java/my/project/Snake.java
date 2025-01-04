@@ -49,7 +49,8 @@ public class Snake {
             || board[newHead[0]][newHead[1]] > 47) {
                 board[newHead[0]][newHead[1]] = DEAD;
                 int[] oldTail = snake.removeFirst();
-                board[oldTail[0]][oldTail[1]] = ' ';
+                if (!(newHead[0] == oldTail[0] && newHead[1] == oldTail[1]))
+                    board[oldTail[0]][oldTail[1]] = ' ';
                 flipOldHead(head);
                 return new Move(false, multiplier, false);
             }
