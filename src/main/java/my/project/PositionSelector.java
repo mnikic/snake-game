@@ -1,6 +1,7 @@
 package my.project;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 public class PositionSelector {
 
@@ -40,6 +41,20 @@ public class PositionSelector {
         return true;
     }
 
+    public boolean checkUnoccupied(int[] position) {
+        int pos = position[0] * width + position[1];
+        int where = index[pos];
+        return where <= limit;
+    }
+
+    public  void debug(int[] position) {
+        int pos = position[0] * width + position[1];
+        int where = index[pos];
+        System.out.println("where is "+ where+" and limit is "+limit);
+        System.out.println("positions:"+Arrays.toString(positions));
+        System.out.println("index:"+Arrays.toString(index));
+    }
+
     public int[] randomUnoccupiedPosition() {
         int position = random.nextInt(limit + 1);
         int[] result = new int[] { positions[position] / width, positions[position] % width };
@@ -51,6 +66,7 @@ public class PositionSelector {
     }
 
     private void init() {
+        limit = this.height * this.width - 1;
         for (int i = 0; i <= limit; i++) {
             positions[i] = i;
             index[i] = i;
