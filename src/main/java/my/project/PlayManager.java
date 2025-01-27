@@ -26,9 +26,11 @@ public class PlayManager {
     private int level;
     private int score;
     private int thingsEaten;
+    private ImageLoader imageLoader;
 
     public PlayManager() {
         snake = new Snake(20, 12);
+        imageLoader = new ImageLoader();
         init();
     }
 
@@ -88,7 +90,7 @@ public class PlayManager {
                     graphics.fillRect(x, y, width, width);
                 } else if (board[i][j] == Snake.PLUS) {
                     graphics.setColor(Color.RED);
-                    graphics.fillRect(x - 3, y - 3, Block.SIZE, Block.SIZE);
+                    graphics.drawImage(imageLoader.getMouseImage(), x - 3, y - 3, imageLoader.getImageObserver());
                 } else if (board[i][j] >= 48 && board[i][j] < 60){
                     graphics.setColor(Color.DARK_GRAY);
                     graphics.fillRect(x - 3, y - 3, Block.SIZE, Block.SIZE);
