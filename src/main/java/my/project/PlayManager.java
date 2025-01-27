@@ -87,7 +87,8 @@ public class PlayManager {
                     graphics.fillRect(x, y, width, width);
                 } else if (board[i][j] == Snake.SNAKE) {
                     graphics.setColor(GREEN);
-                    graphics.fillRect(x, y, width, width);
+                    //graphics.fillRect(x, y, width, width);
+                    graphics.fillOval(x, y, width + 4, width + 4);
                 } else if (board[i][j] == Snake.PLUS) {
                     graphics.setColor(Color.RED);
                     graphics.drawImage(imageLoader.getMouseImage(), x - 3, y - 3, imageLoader.getImageObserver());
