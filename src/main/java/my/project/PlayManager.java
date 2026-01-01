@@ -48,7 +48,7 @@ public class PlayManager {
                     thingsEaten++;
                     switch (move.distance()) {
                         case 1:
-                            GamePanel.SOUNDS.play(0, false);   
+                            GamePanel.SOUNDS.play(0, false);
                             break;
                         case 2:
                             GamePanel.SOUNDS.play(4, false);
@@ -85,19 +85,19 @@ public class PlayManager {
                 if (board[i][j] == Snake.HEAD) {
                     graphics.setColor(DARK_GREEN);
                     graphics.fillRect(x, y, width, width);
-                } else if (board[i][j] == Snake.SNAKE) {
+                } else if (Snake.isSnake(board[i][j])) {
                     graphics.setColor(GREEN);
-                    //graphics.fillRect(x, y, width, width);
+                    // graphics.fillRect(x, y, width, width);
                     graphics.fillOval(x, y, width + 4, width + 4);
                 } else if (board[i][j] == Snake.PLUS) {
                     graphics.setColor(Color.RED);
                     graphics.drawImage(imageLoader.getMouseImage(), x - 3, y - 3, imageLoader.getImageObserver());
-                } else if (board[i][j] >= 48 && board[i][j] < 60){
+                } else if (board[i][j] >= 48 && board[i][j] < 60) {
                     graphics.setColor(Color.DARK_GRAY);
                     graphics.fillRect(x - 3, y - 3, Block.SIZE, Block.SIZE);
                     graphics.setColor(Color.WHITE);
                     graphics.setFont(graphics.getFont().deriveFont(30f));
-                    graphics.drawString(""+(board[i][j] - 48)+"x", x - 3, y - 3);
+                    graphics.drawString("" + (board[i][j] - 48) + "x", x - 3, y - 3);
                 } else if (board[i][j] == Snake.DEAD) {
                     graphics.setColor(Color.BLUE);
                     graphics.fillRect(x - 3, y - 3, Block.SIZE, Block.SIZE);
@@ -127,7 +127,7 @@ public class PlayManager {
                 graphics.drawString("SPACE to start!", RIGHT_X + 100, TOP_Y + 350);
                 graphics.drawString("Esc to quit.", RIGHT_X + 100, TOP_Y + 400);
             } else {
-                if (gameOverCount++ * 3 < GamePanel.FPS) 
+                if (gameOverCount++ * 3 < GamePanel.FPS)
                     graphics.setColor(Color.WHITE);
                 else if (gameOverCount * 3 < GamePanel.FPS * 2)
                     graphics.setColor(Color.YELLOW);

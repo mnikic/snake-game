@@ -1,18 +1,40 @@
 package my.project;
 
 import java.util.List;
+import java.util.Set;
+
+import static java.util.Arrays.asList;
+
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
 
 public class Snake {
-    public static final char SNAKE = '*';
-    public static final char SNAKE_BEND_LEFT = 'L';
+
     public static final char PLUS = '+';
-    public static final char SWALLOWED = 'O';
     public static final char DEAD = 'X';
     public static final char HEAD = 'H';
+
+    public static final char BODY_V = '|';
+    public static final char BODY_H = '-';
+    public static final char TURN_UR = 'L'; // Up-Right connection
+    public static final char TURN_UL = 'J'; // Up-Left connection
+    public static final char TURN_DL = '7'; // Down-Left connection
+    public static final char TURN_DR = 'F'; // Down-Right connection
+
+    public static final char TAIL_U = '^';
+    public static final char TAIL_D = 'v';
+    public static final char TAIL_L = '<';
+    public static final char TAIL_R = '>';
+
+    private static final Set<Character> SNAKE_CHARS = new HashSet<>();
+
+    static {
+        SNAKE_CHARS.addAll(
+                asList(TAIL_U, TAIL_D, TAIL_L, TAIL_R, BODY_H, BODY_V, TURN_DR, TURN_DL, TURN_UL, TURN_UR, HEAD));
+    }
 
     private final int depth, width;
     private final LinkedList<int[]> snake = new LinkedList<>();
@@ -36,6 +58,7 @@ public class Snake {
         int[] oldHead = head;
         Direction direction;
         int multiplier = 1;
+
         if (!moveBuffer.isEmpty()) {
             direction = moveBuffer.poll();
             while (!moveBuffer.isEmpty() && moveBuffer.peek() == direction) {
@@ -44,48 +67,139 @@ public class Snake {
             }
         } else
             direction = lastDirection;
+
         int eatenAt = 0;
+
+        Direction previousDirForLoop = lastDirection;
         for (int i = 0; i < multiplier; i++) {
             int[] newHead = { head[0] + direction.getDelta()[0], head[1] + direction.getDelta()[1] };
+
+            // Collision Logic
             if (newHead[0] < 1 || newHead[0] >= board.length - 1 || newHead[1] < 1
-                    || newHead[1] >= board[newHead[0]].length - 1 || board[newHead[0]][newHead[1]] == SNAKE
+                    || newHead[1] >= board[newHead[0]].length - 1 || isSnake(board[newHead[0]][newHead[1]])
                     || board[newHead[0]][newHead[1]] > 47) {
+
                 board[newHead[0]][newHead[1]] = DEAD;
                 int[] oldTail = snake.removeFirst();
-                if (!(newHead[0] == oldTail[0] && newHead[1] == oldTail[1]))
+
+                if (!(newHead[0] == oldTail[0] && newHead[1] == oldTail[1])) {
                     board[oldTail[0]][oldTail[1]] = ' ';
-                flipOldHead(head);
+                    positionSelector.unoccupy(new int[] { oldTail[0] - 1, oldTail[1] - 1 });
+                }
+
+                flipOldHead(head, direction, previousDirForLoop);
                 return new Move(false, multiplier, false);
             }
+
             positionSelector.occupy(new int[] { newHead[0] - 1, newHead[1] - 1 });
+
             if (board[newHead[0]][newHead[1]] != PLUS) {
                 int[] oldTail = snake.removeFirst();
                 positionSelector.unoccupy(new int[] { oldTail[0] - 1, oldTail[1] - 1 });
                 board[newHead[0]][newHead[1]] = HEAD;
                 board[oldTail[0]][oldTail[1]] = ' ';
-                flipOldHead(head);
             } else {
                 eatenAt = i;
                 board[newHead[0]][newHead[1]] = (char) (multiplier - eatenAt + 48);
                 var newApple = positionSelector.randomUnoccupiedPosition();
                 apple = new int[] { newApple[0] + 1, newApple[1] + 1 };
-                flipOldHead(head);
                 scored = true;
             }
+
+            flipOldHead(head, direction, previousDirForLoop);
+
             snake.addLast(newHead);
             head = newHead;
+
+            // Update the previous direction for the NEXT iteration of the loop
+            previousDirForLoop = direction;
+            updateTailGraphic();
         }
+
         drawApple(oldHead);
-        if (lastDirection != direction && snake.size() > 1) {
-            if (board[oldHead[0]][oldHead[1]] != ' ')
-                board[oldHead[0]][oldHead[1]] = SNAKE_BEND_LEFT;
-        }
+
         if (moveBuffer.isEmpty()) {
             lastDirection = direction;
         }
+
         System.out.println("Last move: mulitplier: " + multiplier + " scored: " + scored);
         sanityCheck();
         return new Move(true, multiplier - eatenAt, scored);
+    }
+
+    private void flipOldHead(int[] head, Direction direction, Direction prevDirection) {
+        if (board[head[0]][head[1]] == HEAD)
+            drawComponentAfterHead(head, direction, prevDirection);
+    }
+
+    void drawComponentAfterHead(int[] oldHead, Direction direction, Direction prevDirection) {
+        if (snake.size() == 0 || board[oldHead[0]][oldHead[1]] == ' ')
+            return;
+
+        if (prevDirection != direction) {
+            char ch = ' ';
+
+            if (direction == Direction.UP) {
+                if (prevDirection == Direction.LEFT)
+                    ch = TURN_UR; // Came from RIGHT (L), going UP
+                else if (prevDirection == Direction.RIGHT)
+                    ch = TURN_UL; // Came from LEFT (J), going UP
+            } else if (direction == Direction.DOWN) {
+                if (prevDirection == Direction.LEFT)
+                    ch = TURN_DR; // Came from RIGHT (F), going DOWN
+                else if (prevDirection == Direction.RIGHT)
+                    ch = TURN_DL; // Came from LEFT (7), going DOWN
+            } else if (direction == Direction.LEFT) {
+                if (prevDirection == Direction.UP)
+                    ch = TURN_DL; // Came from DOWN (7), going LEFT
+                else if (prevDirection == Direction.DOWN)
+                    ch = TURN_UL; // Came from UP (J), going LEFT
+            } else { // RIGHT
+                if (prevDirection == Direction.UP)
+                    ch = TURN_DR; // Came from DOWN (F), going RIGHT
+                else if (prevDirection == Direction.DOWN)
+                    ch = TURN_UR; // Came from UP (L), going RIGHT
+            }
+
+            if (ch == ' ') {
+                // Should be unreachable unless 180 turn (which game rules should prevent)
+                // Fallback to simple body part
+                board[oldHead[0]][oldHead[1]] = (direction == Direction.LEFT || direction == Direction.RIGHT) ? BODY_H
+                        : BODY_V;
+            } else {
+                board[oldHead[0]][oldHead[1]] = ch;
+            }
+        } else {
+            // Straight line
+            board[oldHead[0]][oldHead[1]] = (direction == Direction.LEFT || direction == Direction.RIGHT) ? BODY_H
+                    : BODY_V;
+        }
+    }
+
+    private void updateTailGraphic() {
+        if (snake.size() < 2)
+            return; // Can't determine direction if size is 1
+
+        int[] tail = snake.getFirst(); // The current end of the snake
+        int[] neck = snake.get(1); // The part attached to the tail
+
+        // Determine which way the tail should point
+        // Logic: The tail points AWAY from the neck
+        char tailChar = ' ';
+
+        if (neck[0] < tail[0])
+            tailChar = TAIL_D; // Neck is Above, Tail points Down (v)
+        else if (neck[0] > tail[0])
+            tailChar = TAIL_U; // Neck is Below, Tail points Up (^)
+        else if (neck[1] < tail[1])
+            tailChar = TAIL_R; // Neck is Left, Tail points Right (>)
+        else if (neck[1] > tail[1])
+            tailChar = TAIL_L; // Neck is Right, Tail points Left (<)
+
+        // Only update if it's not currently digesting a number
+        if (board[tail[0]][tail[1]] < '0' || board[tail[0]][tail[1]] > '9') {
+            board[tail[0]][tail[1]] = tailChar;
+        }
     }
 
     private void sanityCheck() {
@@ -102,7 +216,7 @@ public class Snake {
                         positionSelector.debug(position);
                         System.exit(1);
                     }
-                } else if (ch == SNAKE || ch == SNAKE_BEND_LEFT) {
+                } else if (SNAKE_CHARS.contains(ch)) {
                     if (!occupied) {
                         board[i][j] = 'I';
                         System.out.println(print());
@@ -135,11 +249,6 @@ public class Snake {
                 }
             }
         }
-    }
-
-    private void flipOldHead(int[] head) {
-        if (board[head[0]][head[1]] == HEAD)
-            board[head[0]][head[1]] = SNAKE;
     }
 
     private void drawApple(int[] oldHead) {
@@ -252,5 +361,9 @@ public class Snake {
         public int distance() {
             return distance;
         }
+    }
+
+    public static boolean isSnake(char ch) {
+        return SNAKE_CHARS.contains(ch);
     }
 }
