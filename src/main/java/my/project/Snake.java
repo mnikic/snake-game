@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 public class Snake {
     public static final char SNAKE = '*';
+    public static final char SNAKE_BEND_LEFT = 'L';
     public static final char PLUS = '+';
     public static final char SWALLOWED = 'O';
     public static final char DEAD = 'X';
@@ -47,8 +48,8 @@ public class Snake {
         for (int i = 0; i < multiplier; i++) {
             int[] newHead = { head[0] + direction.getDelta()[0], head[1] + direction.getDelta()[1] };
             if (newHead[0] < 1 || newHead[0] >= board.length - 1 || newHead[1] < 1
-                    || newHead[1] >= board[newHead[0]].length - 1 || board[newHead[0]][newHead[1]] == SNAKE 
-            || board[newHead[0]][newHead[1]] > 47) {
+                    || newHead[1] >= board[newHead[0]].length - 1 || board[newHead[0]][newHead[1]] == SNAKE
+                    || board[newHead[0]][newHead[1]] > 47) {
                 board[newHead[0]][newHead[1]] = DEAD;
                 int[] oldTail = snake.removeFirst();
                 if (!(newHead[0] == oldTail[0] && newHead[1] == oldTail[1]))
@@ -56,18 +57,18 @@ public class Snake {
                 flipOldHead(head);
                 return new Move(false, multiplier, false);
             }
-            positionSelector.occupy(new int[]{newHead[0] - 1,newHead[1] - 1});
+            positionSelector.occupy(new int[] { newHead[0] - 1, newHead[1] - 1 });
             if (board[newHead[0]][newHead[1]] != PLUS) {
                 int[] oldTail = snake.removeFirst();
-                positionSelector.unoccupy(new int[]{oldTail[0] - 1, oldTail[1] - 1});
+                positionSelector.unoccupy(new int[] { oldTail[0] - 1, oldTail[1] - 1 });
                 board[newHead[0]][newHead[1]] = HEAD;
                 board[oldTail[0]][oldTail[1]] = ' ';
                 flipOldHead(head);
             } else {
                 eatenAt = i;
-                board[newHead[0]][newHead[1]] = (char)(multiplier - eatenAt + 48);
+                board[newHead[0]][newHead[1]] = (char) (multiplier - eatenAt + 48);
                 var newApple = positionSelector.randomUnoccupiedPosition();
-                apple = new int[]{newApple[0] + 1, newApple[1] + 1};
+                apple = new int[] { newApple[0] + 1, newApple[1] + 1 };
                 flipOldHead(head);
                 scored = true;
             }
@@ -75,10 +76,14 @@ public class Snake {
             head = newHead;
         }
         drawApple(oldHead);
+        if (lastDirection != direction && snake.size() > 1) {
+            if (board[oldHead[0]][oldHead[1]] != ' ')
+                board[oldHead[0]][oldHead[1]] = SNAKE_BEND_LEFT;
+        }
         if (moveBuffer.isEmpty()) {
             lastDirection = direction;
         }
-        System.out.println("Last move: mulitplier: "+multiplier+" scored: "+scored);
+        System.out.println("Last move: mulitplier: " + multiplier + " scored: " + scored);
         sanityCheck();
         return new Move(true, multiplier - eatenAt, scored);
     }
@@ -86,22 +91,22 @@ public class Snake {
     private void sanityCheck() {
         for (int i = 1; i < board.length - 1; i++) {
             for (int j = 1; j < board[i].length - 1; j++) {
-                var position = new int[]{i-1, j-1};
+                var position = new int[] { i - 1, j - 1 };
                 var occupied = !positionSelector.checkUnoccupied(position);
                 var ch = board[i][j];
                 if (ch == ' ') {
                     if (occupied) {
-                        System.out.println("Position "+i+", "+j+" shouldnt be considered occupied");
+                        System.out.println("Position " + i + ", " + j + " shouldnt be considered occupied");
                         board[i][j] = 'I';
                         System.out.println(print());
                         positionSelector.debug(position);
                         System.exit(1);
                     }
-                } else if (ch == SNAKE) {
+                } else if (ch == SNAKE || ch == SNAKE_BEND_LEFT) {
                     if (!occupied) {
                         board[i][j] = 'I';
                         System.out.println(print());
-                        System.out.println("Position "+i+", "+j+" snake should be occupied.");
+                        System.out.println("Position " + i + ", " + j + " snake should be occupied.");
                         positionSelector.debug(position);
                         System.exit(1);
                     }
@@ -109,7 +114,7 @@ public class Snake {
                     if (!occupied) {
                         board[i][j] = 'I';
                         System.out.println(print());
-                        System.out.println("Position "+i+", "+j+" head should be occupied.");
+                        System.out.println("Position " + i + ", " + j + " head should be occupied.");
                         positionSelector.debug(position);
                         System.exit(1);
                     }
@@ -117,14 +122,14 @@ public class Snake {
                     if (occupied) {
                         board[i][j] = 'I';
                         System.out.println(print());
-                        System.out.println("Position "+i+", "+j+" apple should not be occupied.");
+                        System.out.println("Position " + i + ", " + j + " apple should not be occupied.");
                         positionSelector.debug(position);
                         System.exit(1);
                     }
                 } else if (!occupied) {
                     board[i][j] = 'I';
                     System.out.println(print());
-                    System.out.println("Position "+i+", "+j+" char "+ ch+" should be occupied.");
+                    System.out.println("Position " + i + ", " + j + " char " + ch + " should be occupied.");
                     positionSelector.debug(position);
                     System.exit(1);
                 }
@@ -136,24 +141,24 @@ public class Snake {
         if (board[head[0]][head[1]] == HEAD)
             board[head[0]][head[1]] = SNAKE;
     }
-    
+
     private void drawApple(int[] oldHead) {
         int[] currentHead = snake.getLast();
         int x = apple[0];
         int y = apple[1];
-        int xDistance = currentHead[0] - oldHead[0]; 
-        int xDelta = xDistance > 0 ? 1: (xDistance == 0 ? 0 : -1);
+        int xDistance = currentHead[0] - oldHead[0];
+        int xDelta = xDistance > 0 ? 1 : (xDistance == 0 ? 0 : -1);
         x += xDelta;
         if (x < 1)
             x = 2;
         if (x > board.length - 2)
             x = board.length - 2;
         if (xDelta == 0) {
-            y += (currentHead[1] - oldHead[1]) > 0 ? 1: -1;
+            y += (currentHead[1] - oldHead[1]) > 0 ? 1 : -1;
             if (y < 1)
                 y = 2;
             else if (y > board[x].length - 2)
-               y =  board[x].length - 2;
+                y = board[x].length - 2;
         }
         if (board[x][y] != ' ')
             return;
@@ -184,7 +189,7 @@ public class Snake {
             }
         }
         var newApple = positionSelector.randomUnoccupiedPosition();
-        apple = new int[]{newApple[0] + 1, newApple[1] + 1};
+        apple = new int[] { newApple[0] + 1, newApple[1] + 1 };
         drawApple(head);
         right();
     }
