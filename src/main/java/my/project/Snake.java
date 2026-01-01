@@ -19,10 +19,10 @@ public class Snake {
 
     public static final char BODY_V = '|';
     public static final char BODY_H = '-';
-    public static final char TURN_UR = 'L'; // Up-Right connection
-    public static final char TURN_UL = 'J'; // Up-Left connection
-    public static final char TURN_DL = '7'; // Down-Left connection
-    public static final char TURN_DR = 'F'; // Down-Right connection
+    public static final char TURN_UR = 'L';
+    public static final char TURN_UL = 'J';
+    public static final char TURN_DL = '7';
+    public static final char TURN_DR = 'F';
 
     public static final char TAIL_U = '^';
     public static final char TAIL_D = 'v';
@@ -53,153 +53,246 @@ public class Snake {
     }
 
     public Move move() {
-        boolean scored = false;
-        int[] head = snake.getLast();
-        int[] oldHead = head;
-        Direction direction;
+        DirectionBatch batch = consumeDirectionBuffer();
+        return executeMoveBatch(batch);
+    }
+
+    private DirectionBatch consumeDirectionBuffer() {
+        if (moveBuffer.isEmpty()) {
+            return new DirectionBatch(lastDirection, 1);
+        }
+
+        Direction direction = moveBuffer.poll();
         int multiplier = 1;
 
-        if (!moveBuffer.isEmpty()) {
-            direction = moveBuffer.poll();
-            while (!moveBuffer.isEmpty() && moveBuffer.peek() == direction) {
-                moveBuffer.poll();
-                multiplier++;
-            }
-        } else
-            direction = lastDirection;
-
-        int eatenAt = 0;
-
-        Direction previousDirForLoop = lastDirection;
-        for (int i = 0; i < multiplier; i++) {
-            int[] newHead = { head[0] + direction.getDelta()[0], head[1] + direction.getDelta()[1] };
-
-            // Collision Logic
-            if (newHead[0] < 1 || newHead[0] >= board.length - 1 || newHead[1] < 1
-                    || newHead[1] >= board[newHead[0]].length - 1 || isSnake(board[newHead[0]][newHead[1]])
-                    || board[newHead[0]][newHead[1]] > 47) {
-
-                board[newHead[0]][newHead[1]] = DEAD;
-                int[] oldTail = snake.removeFirst();
-
-                if (!(newHead[0] == oldTail[0] && newHead[1] == oldTail[1])) {
-                    board[oldTail[0]][oldTail[1]] = ' ';
-                    positionSelector.unoccupy(new int[] { oldTail[0] - 1, oldTail[1] - 1 });
-                }
-
-                flipOldHead(head, direction, previousDirForLoop);
-                return new Move(false, multiplier, false);
-            }
-
-            positionSelector.occupy(new int[] { newHead[0] - 1, newHead[1] - 1 });
-
-            if (board[newHead[0]][newHead[1]] != PLUS) {
-                int[] oldTail = snake.removeFirst();
-                positionSelector.unoccupy(new int[] { oldTail[0] - 1, oldTail[1] - 1 });
-                board[newHead[0]][newHead[1]] = HEAD;
-                board[oldTail[0]][oldTail[1]] = ' ';
-            } else {
-                eatenAt = i;
-                board[newHead[0]][newHead[1]] = (char) (multiplier - eatenAt + 48);
-                var newApple = positionSelector.randomUnoccupiedPosition();
-                apple = new int[] { newApple[0] + 1, newApple[1] + 1 };
-                scored = true;
-            }
-
-            flipOldHead(head, direction, previousDirForLoop);
-
-            snake.addLast(newHead);
-            head = newHead;
-
-            // Update the previous direction for the NEXT iteration of the loop
-            previousDirForLoop = direction;
-            updateTailGraphic();
+        while (!moveBuffer.isEmpty() && moveBuffer.peek() == direction) {
+            moveBuffer.poll();
+            multiplier++;
         }
 
-        drawApple(oldHead);
+        return new DirectionBatch(direction, multiplier);
+    }
+
+    private Move executeMoveBatch(DirectionBatch batch) {
+        int[] oldHead = snake.getLast();
+        int[] currentHead = oldHead;
+        Direction previousDirection = lastDirection;
+        int eatenAt = 0;
+        boolean scored = false;
+
+        for (int step = 0; step < batch.multiplier; step++) {
+            int stepsRemaining = batch.multiplier - step;
+            MoveResult result = executeSingleMove(currentHead, batch.direction, previousDirection, stepsRemaining);
+
+            if (!result.alive) {
+                return new Move(false, batch.multiplier, false);
+            }
+
+            if (result.scored) {
+                scored = true;
+                eatenAt = step;
+            }
+
+            currentHead = result.newHead;
+            previousDirection = batch.direction;
+        }
+
+        animateApple(oldHead, currentHead);
 
         if (moveBuffer.isEmpty()) {
-            lastDirection = direction;
+            lastDirection = batch.direction;
         }
 
-        System.out.println("Last move: mulitplier: " + multiplier + " scored: " + scored);
+        System.out.println("Last move: multiplier: " + batch.multiplier + " scored: " + scored);
         sanityCheck();
-        return new Move(true, multiplier - eatenAt, scored);
+        return new Move(true, batch.multiplier - eatenAt, scored);
     }
 
-    private void flipOldHead(int[] head, Direction direction, Direction prevDirection) {
-        if (board[head[0]][head[1]] == HEAD)
-            drawComponentAfterHead(head, direction, prevDirection);
-    }
+    private MoveResult executeSingleMove(int[] currentHead, Direction direction, Direction previousDirection,
+            int stepsRemaining) {
+        int[] newHead = calculateNewPosition(currentHead, direction);
 
-    void drawComponentAfterHead(int[] oldHead, Direction direction, Direction prevDirection) {
-        if (snake.size() == 0 || board[oldHead[0]][oldHead[1]] == ' ')
-            return;
+        if (isCollision(newHead)) {
+            handleCollision(newHead, currentHead, direction, previousDirection);
+            return MoveResult.dead();
+        }
 
-        if (prevDirection != direction) {
-            char ch = ' ';
+        boolean scored = (board[newHead[0]][newHead[1]] == PLUS);
 
-            if (direction == Direction.UP) {
-                if (prevDirection == Direction.LEFT)
-                    ch = TURN_UR; // Came from RIGHT (L), going UP
-                else if (prevDirection == Direction.RIGHT)
-                    ch = TURN_UL; // Came from LEFT (J), going UP
-            } else if (direction == Direction.DOWN) {
-                if (prevDirection == Direction.LEFT)
-                    ch = TURN_DR; // Came from RIGHT (F), going DOWN
-                else if (prevDirection == Direction.RIGHT)
-                    ch = TURN_DL; // Came from LEFT (7), going DOWN
-            } else if (direction == Direction.LEFT) {
-                if (prevDirection == Direction.UP)
-                    ch = TURN_DL; // Came from DOWN (7), going LEFT
-                else if (prevDirection == Direction.DOWN)
-                    ch = TURN_UL; // Came from UP (J), going LEFT
-            } else { // RIGHT
-                if (prevDirection == Direction.UP)
-                    ch = TURN_DR; // Came from DOWN (F), going RIGHT
-                else if (prevDirection == Direction.DOWN)
-                    ch = TURN_UR; // Came from UP (L), going RIGHT
-            }
+        occupyPosition(newHead);
 
-            if (ch == ' ') {
-                // Should be unreachable unless 180 turn (which game rules should prevent)
-                // Fallback to simple body part
-                board[oldHead[0]][oldHead[1]] = (direction == Direction.LEFT || direction == Direction.RIGHT) ? BODY_H
-                        : BODY_V;
-            } else {
-                board[oldHead[0]][oldHead[1]] = ch;
-            }
+        if (scored) {
+            board[newHead[0]][newHead[1]] = (char) (stepsRemaining + 48);
+            spawnNewApple();
         } else {
-            // Straight line
-            board[oldHead[0]][oldHead[1]] = (direction == Direction.LEFT || direction == Direction.RIGHT) ? BODY_H
-                    : BODY_V;
+            removeTail();
+            board[newHead[0]][newHead[1]] = HEAD;
+        }
+
+        updateHeadGraphics(currentHead, direction, previousDirection);
+        snake.addLast(newHead);
+        updateTailGraphic();
+
+        return MoveResult.alive(newHead, scored);
+    }
+
+    private int[] calculateNewPosition(int[] position, Direction direction) {
+        return new int[] {
+                position[0] + direction.getDelta()[0],
+                position[1] + direction.getDelta()[1]
+        };
+    }
+
+    private boolean isCollision(int[] position) {
+        if (position[0] < 1 || position[0] >= board.length - 1)
+            return true;
+        if (position[1] < 1 || position[1] >= board[position[0]].length - 1)
+            return true;
+
+        char cell = board[position[0]][position[1]];
+        return isSnake(cell) || cell > 47; // Numbers indicating digestion
+    }
+
+    private void handleCollision(int[] newHead, int[] currentHead, Direction direction, Direction previousDirection) {
+        board[newHead[0]][newHead[1]] = DEAD;
+        int[] oldTail = snake.removeFirst();
+
+        if (!(newHead[0] == oldTail[0] && newHead[1] == oldTail[1])) {
+            clearPosition(oldTail);
+        }
+
+        updateHeadGraphics(currentHead, direction, previousDirection);
+    }
+
+    private void removeTail() {
+        int[] oldTail = snake.removeFirst();
+        clearPosition(oldTail);
+    }
+
+    private void spawnNewApple() {
+        int[] newApple = positionSelector.randomUnoccupiedPosition();
+        apple = toBoardCoordinates(newApple);
+        board[apple[0]][apple[1]] = PLUS;
+    }
+
+    private void updateHeadGraphics(int[] position, Direction newDirection, Direction previousDirection) {
+        if (board[position[0]][position[1]] == HEAD) {
+            board[position[0]][position[1]] = calculateBodySegmentChar(newDirection, previousDirection);
+        }
+    }
+
+    private char calculateBodySegmentChar(Direction currentDirection, Direction previousDirection) {
+        if (currentDirection == previousDirection) {
+            return isStraightVertical(currentDirection) ? BODY_V : BODY_H;
+        }
+
+        return calculateTurnChar(currentDirection, previousDirection);
+    }
+
+    private boolean isStraightVertical(Direction direction) {
+        return direction == Direction.UP || direction == Direction.DOWN;
+    }
+
+    private char calculateTurnChar(Direction current, Direction previous) {
+        // Previous direction is where we came FROM
+        // Current direction is where we're going TO
+        if (current == Direction.UP) {
+            return previous == Direction.LEFT ? TURN_UR : TURN_UL;
+        } else if (current == Direction.DOWN) {
+            return previous == Direction.LEFT ? TURN_DR : TURN_DL;
+        } else if (current == Direction.LEFT) {
+            return previous == Direction.UP ? TURN_DL : TURN_UL;
+        } else { // RIGHT
+            return previous == Direction.UP ? TURN_DR : TURN_UR;
         }
     }
 
     private void updateTailGraphic() {
         if (snake.size() < 2)
-            return; // Can't determine direction if size is 1
+            return;
 
-        int[] tail = snake.getFirst(); // The current end of the snake
-        int[] neck = snake.get(1); // The part attached to the tail
+        int[] tail = snake.getFirst();
+        int[] neck = snake.get(1);
 
-        // Determine which way the tail should point
-        // Logic: The tail points AWAY from the neck
-        char tailChar = ' ';
-
-        if (neck[0] < tail[0])
-            tailChar = TAIL_D; // Neck is Above, Tail points Down (v)
-        else if (neck[0] > tail[0])
-            tailChar = TAIL_U; // Neck is Below, Tail points Up (^)
-        else if (neck[1] < tail[1])
-            tailChar = TAIL_R; // Neck is Left, Tail points Right (>)
-        else if (neck[1] > tail[1])
-            tailChar = TAIL_L; // Neck is Right, Tail points Left (<)
-
-        // Only update if it's not currently digesting a number
-        if (board[tail[0]][tail[1]] < '0' || board[tail[0]][tail[1]] > '9') {
-            board[tail[0]][tail[1]] = tailChar;
+        // Skip if tail is currently digesting (has a number)
+        char currentChar = board[tail[0]][tail[1]];
+        if (currentChar >= '0' && currentChar <= '9') {
+            return;
         }
+
+        board[tail[0]][tail[1]] = calculateTailChar(tail, neck);
+    }
+
+    private char calculateTailChar(int[] tail, int[] neck) {
+        if (neck[0] < tail[0])
+            return TAIL_D;
+        if (neck[0] > tail[0])
+            return TAIL_U;
+        if (neck[1] < tail[1])
+            return TAIL_R;
+        if (neck[1] > tail[1])
+            return TAIL_L;
+        return ' '; // Should not happen
+    }
+
+    private void animateApple(int[] oldHead, int[] currentHead) {
+        int deltaX = currentHead[0] - oldHead[0];
+        int deltaY = currentHead[1] - oldHead[1];
+
+        int newX = apple[0] + sign(deltaX);
+        int newY = apple[1];
+
+        if (deltaX == 0) {
+            newY += sign(deltaY);
+        }
+
+        newX = clampX(newX);
+        newY = clampY(newX, newY);
+
+        if (board[newX][newY] == ' ') {
+            board[apple[0]][apple[1]] = ' ';
+            board[newX][newY] = PLUS;
+            apple[0] = newX;
+            apple[1] = newY;
+        }
+    }
+
+    private int sign(int value) {
+        return value > 0 ? 1 : (value < 0 ? -1 : 0);
+    }
+
+    private int clampX(int x) {
+        if (x < 1)
+            return 2;
+        if (x > board.length - 2)
+            return board.length - 2;
+        return x;
+    }
+
+    private int clampY(int x, int y) {
+        if (y < 1)
+            return 2;
+        if (y > board[x].length - 2)
+            return board[x].length - 2;
+        return y;
+    }
+
+    // Position management helpers
+    private void occupyPosition(int[] boardPos) {
+        positionSelector.occupy(toSelectorCoordinates(boardPos));
+    }
+
+    private void clearPosition(int[] boardPos) {
+        board[boardPos[0]][boardPos[1]] = ' ';
+        positionSelector.unoccupy(toSelectorCoordinates(boardPos));
+    }
+
+    private int[] toSelectorCoordinates(int[] boardPos) {
+        return new int[] { boardPos[0] - 1, boardPos[1] - 1 };
+    }
+
+    private int[] toBoardCoordinates(int[] selectorPos) {
+        return new int[] { selectorPos[0] + 1, selectorPos[1] + 1 };
     }
 
     private void sanityCheck() {
@@ -251,32 +344,6 @@ public class Snake {
         }
     }
 
-    private void drawApple(int[] oldHead) {
-        int[] currentHead = snake.getLast();
-        int x = apple[0];
-        int y = apple[1];
-        int xDistance = currentHead[0] - oldHead[0];
-        int xDelta = xDistance > 0 ? 1 : (xDistance == 0 ? 0 : -1);
-        x += xDelta;
-        if (x < 1)
-            x = 2;
-        if (x > board.length - 2)
-            x = board.length - 2;
-        if (xDelta == 0) {
-            y += (currentHead[1] - oldHead[1]) > 0 ? 1 : -1;
-            if (y < 1)
-                y = 2;
-            else if (y > board[x].length - 2)
-                y = board[x].length - 2;
-        }
-        if (board[x][y] != ' ')
-            return;
-        board[apple[0]][apple[1]] = ' ';
-        board[x][y] = PLUS;
-        apple[0] = x;
-        apple[1] = y;
-    }
-
     public void reset() {
         positionSelector.reset();
         snake.clear();
@@ -293,13 +360,14 @@ public class Snake {
                     snake.addLast(new int[] { i, j });
                     board[i][j] = HEAD;
                     positionSelector.occupy(new int[] { i - 1, j - 1 });
-                } else
+                } else {
                     board[i][j] = ' ';
+                }
             }
         }
         var newApple = positionSelector.randomUnoccupiedPosition();
         apple = new int[] { newApple[0] + 1, newApple[1] + 1 };
-        drawApple(head);
+        animateApple(head, head);
         right();
     }
 
@@ -337,6 +405,37 @@ public class Snake {
 
     public void left() {
         moveBuffer.offer(Direction.LEFT);
+    }
+
+    // Helper classes
+    private static class DirectionBatch {
+        final Direction direction;
+        final int multiplier;
+
+        DirectionBatch(Direction direction, int multiplier) {
+            this.direction = direction;
+            this.multiplier = multiplier;
+        }
+    }
+
+    private static class MoveResult {
+        final boolean alive;
+        final int[] newHead;
+        final boolean scored;
+
+        private MoveResult(boolean alive, int[] newHead, boolean scored) {
+            this.alive = alive;
+            this.newHead = newHead;
+            this.scored = scored;
+        }
+
+        static MoveResult alive(int[] newHead, boolean scored) {
+            return new MoveResult(true, newHead, scored);
+        }
+
+        static MoveResult dead() {
+            return new MoveResult(false, null, false);
+        }
     }
 
     public static final class Move {
