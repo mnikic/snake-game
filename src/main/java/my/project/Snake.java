@@ -1,35 +1,31 @@
 package my.project;
 
-import java.util.List;
-import java.util.Set;
-
 import static java.util.Arrays.asList;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.stream.Collectors;
 
 public class Snake {
-
     public static final char PLUS = '+';
     public static final char DEAD = 'X';
     public static final char HEAD = 'H';
-
     public static final char BODY_V = '|';
     public static final char BODY_H = '-';
     public static final char TURN_UR = 'L';
     public static final char TURN_UL = 'J';
     public static final char TURN_DL = '7';
     public static final char TURN_DR = 'F';
-
     public static final char TAIL_U = '^';
     public static final char TAIL_D = 'v';
     public static final char TAIL_L = '<';
     public static final char TAIL_R = '>';
     public static final char BORDER = '#';
-
+    private static final String SERIALIZATION_TOKEN = ";";
     private static final Set<Character> SNAKE_CHARS = new HashSet<>();
 
     static {
@@ -55,6 +51,10 @@ public class Snake {
         init();
     }
 
+    public static boolean isSnake(char ch) {
+        return SNAKE_CHARS.contains(ch);
+    }
+
     public Move move() {
         DirectionBatch batch = consumeDirectionBuffer();
         return executeMoveBatch(batch);
@@ -72,7 +72,8 @@ public class Snake {
             moveBuffer.poll();
             multiplier++;
         }
-
+        if (multiplier > 5)
+            multiplier = 5;
         return new DirectionBatch(direction, multiplier);
     }
 
@@ -108,6 +109,7 @@ public class Snake {
 
         System.out.println("Last move: multiplier: " + batch.multiplier + " scored: " + scored);
         sanityCheck();
+        isDirty = true;
         return new Move(true, batch.multiplier - eatenAt, scored);
     }
 
@@ -219,7 +221,7 @@ public class Snake {
 
         // Skip if tail is currently digesting (has a number)
         char currentChar = board[tail[0]][tail[1]];
-        if (currentChar >= '0' && currentChar <= '9') {
+        if (currentChar >= '0' && currentChar <= '5') {
             return;
         }
 
@@ -261,23 +263,19 @@ public class Snake {
     }
 
     private int sign(int value) {
-        return value > 0 ? 1 : (value < 0 ? -1 : 0);
+        return Integer.compare(value, 0);
     }
 
     private int clampX(int x) {
         if (x < 1)
             return 2;
-        if (x > board.length - 2)
-            return board.length - 2;
-        return x;
+        return Math.min(x, board.length - 2);
     }
 
     private int clampY(int x, int y) {
         if (y < 1)
             return 2;
-        if (y > board[x].length - 2)
-            return board[x].length - 2;
-        return y;
+        return Math.min(y, board[x].length - 2);
     }
 
     // Position management helpers
@@ -384,7 +382,7 @@ public class Snake {
     }
 
     public List<Direction> getMoveBuffer() {
-        return moveBuffer.stream().collect(Collectors.toList());
+        return new ArrayList<>(moveBuffer);
     }
 
     public String print() {
@@ -413,6 +411,60 @@ public class Snake {
 
     public void left() {
         moveBuffer.offer(Direction.LEFT);
+    }
+
+    public String getSerializedState() {
+        if (!isDirty) {
+            return cachedSerial;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        // Skip borders (index 0 and length-1)
+        for (int i = 1; i < board.length - 1; i++) {
+            for (int j = 1; j < board[i].length - 1; j++) {
+                char c = board[i][j];
+                if (c != ' ') {
+                    if (sb.length() > 0)
+                        sb.append(SERIALIZATION_TOKEN);
+                    sb.append(i).append(",").append(j).append(",").append(c);
+                }
+            }
+        }
+
+        // Update Cache
+        cachedSerial = sb.toString();
+        isDirty = false; // Mark as clean
+        return cachedSerial;
+    }
+
+    public void deserializeBoard(String state) {
+        // 1. Reset Board (Clear everything except borders)
+        // We assume init() was called once to set up borders
+        for (int i = 1; i < board.length - 1; i++) {
+            for (int j = 1; j < board[i].length - 1; j++) {
+                board[i][j] = ' ';
+            }
+        }
+
+        if (state == null || state.isEmpty())
+            return;
+
+        // 2. Parse the sparse list
+        String[] atoms = state.split(SERIALIZATION_TOKEN);
+        for (String atom : atoms) {
+            String[] parts = atom.split(",");
+            if (parts.length == 3) {
+                try {
+                    int r = Integer.parseInt(parts[0]);
+                    int c = Integer.parseInt(parts[1]);
+                    if (!parts[2].isEmpty()) {
+                        board[r][c] = parts[2].charAt(0);
+                    }
+                } catch (Exception e) {
+                    // ignore malformed atom!
+                }
+            }
+        }
     }
 
     // Helper classes
@@ -467,59 +519,6 @@ public class Snake {
 
         public int distance() {
             return distance;
-        }
-    }
-
-    public static boolean isSnake(char ch) {
-        return SNAKE_CHARS.contains(ch);
-    }
-
-    public String getSerializedState() {
-        if (!isDirty) {
-            return cachedSerial;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        // Skip borders (index 0 and length-1)
-        for (int i = 1; i < board.length - 1; i++) {
-            for (int j = 1; j < board[i].length - 1; j++) {
-                char c = board[i][j];
-                if (c != ' ') {
-                    if (sb.length() > 0)
-                        sb.append("|");
-                    sb.append(i).append(",").append(j).append(",").append(c);
-                }
-            }
-        }
-
-        // Update Cache
-        cachedSerial = sb.toString();
-        isDirty = false; // Mark as clean
-        return cachedSerial;
-    }
-
-    public void deserializeBoard(String state) {
-        // 1. Reset Board (Clear everything except borders)
-        // We assume init() was called once to set up borders
-        for (int i = 1; i < board.length - 1; i++) {
-            for (int j = 1; j < board[i].length - 1; j++) {
-                board[i][j] = ' ';
-            }
-        }
-
-        if (state == null || state.isEmpty())
-            return;
-
-        // 2. Parse the sparse list
-        String[] atoms = state.split("\\|");
-        for (String atom : atoms) {
-            String[] parts = atom.split(",");
-            if (parts.length == 3) {
-                int r = Integer.parseInt(parts[0]);
-                int c = Integer.parseInt(parts[1]);
-                char val = parts[2].charAt(0);
-                board[r][c] = val;
-            }
         }
     }
 }
