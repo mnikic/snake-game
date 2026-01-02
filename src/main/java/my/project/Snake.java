@@ -28,6 +28,7 @@ public class Snake {
     public static final char TAIL_D = 'v';
     public static final char TAIL_L = '<';
     public static final char TAIL_R = '>';
+    public static final char BORDER = '#';
 
     private static final Set<Character> SNAKE_CHARS = new HashSet<>();
 
@@ -43,6 +44,8 @@ public class Snake {
     private final BlockingQueue<Direction> moveBuffer = new LinkedBlockingDeque<>();
     private Direction lastDirection;
     private int[] apple = null;
+    private String cachedSerial = "";
+    private boolean isDirty = true;
 
     public Snake(int depth, int width) {
         this.depth = depth;
@@ -354,12 +357,16 @@ public class Snake {
 
     private void init() {
         int[] head = new int[] { depth / 2, width / 2 };
+
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[i].length; j++) {
+                boolean isBorder = (i == 0 || i == board.length - 1 || j == 0 || j == board[i].length - 1);
                 if (i == head[0] && j == head[1]) {
                     snake.addLast(new int[] { i, j });
                     board[i][j] = HEAD;
                     positionSelector.occupy(new int[] { i - 1, j - 1 });
+                } else if (isBorder) {
+                    board[i][j] = BORDER;
                 } else {
                     board[i][j] = ' ';
                 }
@@ -369,6 +376,7 @@ public class Snake {
         apple = new int[] { newApple[0] + 1, newApple[1] + 1 };
         animateApple(head, head);
         right();
+        isDirty = true;
     }
 
     public char[][] getBoard() {
@@ -464,5 +472,54 @@ public class Snake {
 
     public static boolean isSnake(char ch) {
         return SNAKE_CHARS.contains(ch);
+    }
+
+    public String getSerializedState() {
+        if (!isDirty) {
+            return cachedSerial;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        // Skip borders (index 0 and length-1)
+        for (int i = 1; i < board.length - 1; i++) {
+            for (int j = 1; j < board[i].length - 1; j++) {
+                char c = board[i][j];
+                if (c != ' ') {
+                    if (sb.length() > 0)
+                        sb.append("|");
+                    sb.append(i).append(",").append(j).append(",").append(c);
+                }
+            }
+        }
+
+        // Update Cache
+        cachedSerial = sb.toString();
+        isDirty = false; // Mark as clean
+        return cachedSerial;
+    }
+
+    public void deserializeBoard(String state) {
+        // 1. Reset Board (Clear everything except borders)
+        // We assume init() was called once to set up borders
+        for (int i = 1; i < board.length - 1; i++) {
+            for (int j = 1; j < board[i].length - 1; j++) {
+                board[i][j] = ' ';
+            }
+        }
+
+        if (state == null || state.isEmpty())
+            return;
+
+        // 2. Parse the sparse list
+        String[] atoms = state.split("\\|");
+        for (String atom : atoms) {
+            String[] parts = atom.split(",");
+            if (parts.length == 3) {
+                int r = Integer.parseInt(parts[0]);
+                int c = Integer.parseInt(parts[1]);
+                char val = parts[2].charAt(0);
+                board[r][c] = val;
+            }
+        }
     }
 }
