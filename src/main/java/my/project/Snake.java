@@ -116,6 +116,7 @@ public class Snake {
 
         if (isCollision(newHead)) {
             handleCollision(newHead, currentHead, direction, previousDirection);
+            updateTailGraphic();
             return MoveResult.dead();
         }
 
