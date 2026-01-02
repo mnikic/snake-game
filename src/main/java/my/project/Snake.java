@@ -102,10 +102,7 @@ public class Snake {
         }
 
         animateApple(oldHead, currentHead);
-
-        if (moveBuffer.isEmpty()) {
-            lastDirection = batch.direction;
-        }
+        lastDirection = previousDirection;
 
         System.out.println("Last move: multiplier: " + batch.multiplier + " scored: " + scored);
         sanityCheck();
@@ -134,8 +131,8 @@ public class Snake {
             board[newHead[0]][newHead[1]] = HEAD;
         }
 
-        updateHeadGraphics(currentHead, direction, previousDirection);
         snake.addLast(newHead);
+        updateHeadGraphics(currentHead, direction, previousDirection);
         updateTailGraphic();
 
         return MoveResult.alive(newHead, scored);
