@@ -39,7 +39,7 @@ public class PlayManager {
             updateCount++;
             if (updateCount == framesLimit) {
                 updateCount = 0;
-                Snake.Move move = snake.move();
+                Snake.Move move = snake.move(level);
                 System.out.println(snake.print());
                 if (!move.isAlive()) {
                     gameOver = true;
@@ -60,7 +60,7 @@ public class PlayManager {
                     if (thingsEaten % 5 == 0) {
                         level++;
                         framesLimit--;
-                        framesLimit = Math.max(5, framesLimit);
+                        framesLimit = Math.max(20, framesLimit);
                     }
                 } else if (move.distance() == 1) {
                     GamePanel.SOUNDS.play(2, false);

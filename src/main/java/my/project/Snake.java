@@ -2,15 +2,18 @@ package my.project;
 
 import static java.util.Arrays.asList;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class Snake {
+    private final SecureRandom random = new SecureRandom();
     public static final char PLUS = '+';
     public static final char DEAD = 'X';
     public static final char HEAD_R = 'R';
@@ -64,9 +67,9 @@ public class Snake {
         return ch == HEAD_L || ch == HEAD_D || ch == HEAD_R || ch == HEAD_U;
     }
 
-    public Move move() {
+    public Move move(int level) {
         DirectionBatch batch = consumeDirectionBuffer();
-        return executeMoveBatch(batch);
+        return executeMoveBatch(batch, level);
     }
 
     private DirectionBatch consumeDirectionBuffer() {
@@ -86,7 +89,7 @@ public class Snake {
         return new DirectionBatch(direction, multiplier);
     }
 
-    private Move executeMoveBatch(DirectionBatch batch) {
+    private Move executeMoveBatch(DirectionBatch batch, int level) {
         int[] oldHead = snake.getLast();
         int[] currentHead = oldHead;
         Direction previousDirection = lastDirection;
@@ -106,11 +109,17 @@ public class Snake {
                 eatenAt = step;
             }
 
+            if (level > 5)
+                animateMouse(oldHead, currentHead);
             currentHead = result.newHead;
             previousDirection = batch.direction;
         }
 
-        animateApple(oldHead, currentHead);
+        if (level < 2) {
+        } else if (level < 3)
+            animateApple(oldHead, currentHead);
+        else if (level <= 5)
+            animateMouse(oldHead, currentHead);
         lastDirection = previousDirection;
 
         System.out.println("Last move: multiplier: " + batch.multiplier + " scored: " + scored);
@@ -282,6 +291,47 @@ public class Snake {
             board[newX][newY] = PLUS;
             apple[0] = newX;
             apple[1] = newY;
+        }
+    }
+
+    private static int distance(int[] firstPosition, int[] secondPosition) {
+        return Math.abs(firstPosition[0] - secondPosition[0]) + Math.abs(firstPosition[1] - secondPosition[1]);
+    }
+
+    private void animateMouse(int[] oldHead, int[] currentHead) {
+        List<int[]> winners = new ArrayList<>();
+        winners.add(apple);
+        int maxDistance = distance(apple, currentHead);
+        for (var dir : Direction.values()) {
+            int[] newPosition = calculateNewPosition(apple, dir);
+            if (newPosition[0] < 1 || newPosition[0] > (board.length - 2) || newPosition[1] < 1
+                    || newPosition[1] > (board[newPosition[0]].length - 2)
+                    || Snake.isSnake(board[newPosition[0]][newPosition[1]]))
+                continue;
+            int newDistance = distance(newPosition, currentHead);
+            if (newDistance > maxDistance) {
+                winners.clear();
+                winners.add(newPosition);
+                maxDistance = newDistance;
+            } else
+                winners.add(newPosition);
+        }
+        if (winners.size() == 1 && winners.get(0)[0] == apple[0] && winners.get(0)[1] == apple[1]) {
+            System.out.println("Haven't found further place");
+            return;
+        }
+
+        int[] winner;
+        if (winners.size() == 1)
+            winner = winners.get(0);
+        else
+            winner = winners.get(random.nextInt(winners.size()));
+
+        if (board[winner[0]][winner[1]] == ' ') {
+            board[apple[0]][apple[1]] = ' ';
+            board[winner[0]][winner[1]] = PLUS;
+            apple[0] = winner[0];
+            apple[1] = winner[1];
         }
     }
 
