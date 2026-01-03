@@ -183,10 +183,10 @@ public class Snake {
 
     private boolean isCollision(int[] position) {
         if (isOutOfBounds(position))
-        return true;
+            return true;
 
         char cell = board[position[0]][position[1]];
-        return isSnake(cell) || (cell > 47; // Numbers indicating digestion or body movement
+        return isSnake(cell) || (cell > 47 && cell < 55); // Numbers indicating digestion or body movement
     }
 
     private boolean isOutOfBounds(int[] position) {
