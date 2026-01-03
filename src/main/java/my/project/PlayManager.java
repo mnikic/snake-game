@@ -2,6 +2,7 @@ package my.project;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.util.StringJoiner;
 import java.awt.BasicStroke;
 
@@ -13,7 +14,6 @@ public class PlayManager {
     private static int RIGHT_X = LEFT_X + WIDTH;
     private static int TOP_Y = 50;
     private static int BOTTOM_Y = TOP_Y + HEIGHT;
-    private static final Color GREEN = Color.GREEN;
     private static final Color DARK_GREEN = new Color(0, 135, 62, 200);
 
     // Game state
@@ -82,17 +82,12 @@ public class PlayManager {
                 int x = LEFT_X + (j - 1) * Block.SIZE + 3;
                 int y = TOP_Y + (i - 1) * Block.SIZE + 3;
                 int width = Block.SIZE - 6;
-                if (board[i][j] == Snake.HEAD) {
-                    graphics.setColor(DARK_GREEN);
-                    graphics.fillRect(x, y, width, width);
-                } else if (Snake.isSnake(board[i][j])) {
-                    graphics.setColor(GREEN);
-                    // graphics.fillRect(x, y, width, width);
-                    graphics.fillOval(x, y, width + 4, width + 4);
+                if (Snake.isSnake(board[i][j])) {
+                    graphics.drawImage(drawSnakeBody(board[i][j]), x - 3, y - 3, imageLoader.getImageObserver());
                 } else if (board[i][j] == Snake.PLUS) {
                     graphics.setColor(Color.RED);
                     graphics.drawImage(imageLoader.getMouseImage(), x - 3, y - 3, imageLoader.getImageObserver());
-                } else if (board[i][j] >= 48 && board[i][j] < 60) {
+                } else if (board[i][j] >= 48 && board[i][j] < 54) {
                     graphics.setColor(Color.DARK_GRAY);
                     graphics.fillRect(x - 3, y - 3, Block.SIZE, Block.SIZE);
                     graphics.setColor(Color.WHITE);
@@ -148,6 +143,69 @@ public class PlayManager {
             graphics.setFont(graphics.getFont().deriveFont(20f));
             graphics.drawString(joiner.toString(), LEFT_X, BOTTOM_Y + 30);
         }
+    }
+
+    private BufferedImage drawSnakeBody(char cell) {
+        BufferedImage image = null;
+        switch (cell) {
+            case Snake.HEAD_U:
+                image = imageLoader.getSnakeHead();
+                break;
+            case Snake.HEAD_D:
+                image = imageLoader.getSnakeHead180();
+                break;
+            case Snake.HEAD_L:
+                image = imageLoader.getSnakeHead270();
+                break;
+            case Snake.HEAD_R:
+                image = imageLoader.getSnakeHead90();
+                break;
+            case Snake.BODY_V: // '|'
+                image = imageLoader.getSnakeBody();
+                break;
+            case Snake.BODY_H: // '-'
+                image = imageLoader.getSnakeBody90();
+                break;
+
+            // --- TURNS (Base: Connects Bottom & Left) ---
+
+            case Snake.TURN_DL: // '7' (Bottom-Left)
+                image = imageLoader.getSnakeTurn270();
+                break;
+
+            case Snake.TURN_UL: // 'J' (Top-Left)
+                image = imageLoader.getSnakeTurn();
+                break;
+
+            case Snake.TURN_UR: // 'L' (Top-Right)
+                image = imageLoader.getSnakeTurn90();
+                break;
+
+            case Snake.TURN_DR: // 'F' (Bottom-Right)
+                image = imageLoader.getSnakeTurn180();
+                break;
+
+            // --- TAILS (Base: Tip Points Down / Moving Up) ---
+
+            case Snake.TAIL_U: // Snake moving Up (Tail below body)
+                image = imageLoader.getSnakeTail180();
+                break;
+
+            case Snake.TAIL_R: // Snake moving Right (Tail left of body)
+                image = imageLoader.getSnakeTail270();
+                break;
+
+            case Snake.TAIL_D: // Snake moving Down (Tail above body)
+                image = imageLoader.getSnakeTail();
+                break;
+
+            case Snake.TAIL_L: // Snake moving Left (Tail right of body)
+                image = imageLoader.getSnakeTail90();
+                break;
+        }
+        if (image == null)
+            throw new RuntimeException("No image for " + cell);
+        return image;
     }
 
     public void up() {

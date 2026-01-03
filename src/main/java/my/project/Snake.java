@@ -13,7 +13,10 @@ import java.util.concurrent.LinkedBlockingDeque;
 public class Snake {
     public static final char PLUS = '+';
     public static final char DEAD = 'X';
-    public static final char HEAD = 'H';
+    public static final char HEAD_R = 'R';
+    public static final char HEAD_L = 'H';
+    public static final char HEAD_D = 'D';
+    public static final char HEAD_U = 'U';
     public static final char BODY_V = '|';
     public static final char BODY_H = '-';
     public static final char TURN_UR = 'L';
@@ -30,7 +33,9 @@ public class Snake {
 
     static {
         SNAKE_CHARS.addAll(
-                asList(TAIL_U, TAIL_D, TAIL_L, TAIL_R, BODY_H, BODY_V, TURN_DR, TURN_DL, TURN_UL, TURN_UR, HEAD));
+                asList(HEAD_U, HEAD_R, HEAD_D, HEAD_L, TAIL_U, TAIL_D, TAIL_L, TAIL_R, BODY_H, BODY_V, TURN_DR, TURN_DL,
+                        TURN_UL, TURN_UR));
+        ;
     }
 
     private final int depth, width;
@@ -53,6 +58,10 @@ public class Snake {
 
     public static boolean isSnake(char ch) {
         return SNAKE_CHARS.contains(ch);
+    }
+
+    public static boolean isHead(char ch) {
+        return ch == HEAD_L || ch == HEAD_D || ch == HEAD_R || ch == HEAD_U;
     }
 
     public Move move() {
@@ -129,7 +138,7 @@ public class Snake {
             spawnNewApple();
         } else {
             removeTail();
-            board[newHead[0]][newHead[1]] = HEAD;
+            board[newHead[0]][newHead[1]] = chooseHeadSymbol(direction);
         }
 
         snake.addLast(newHead);
@@ -137,6 +146,22 @@ public class Snake {
         updateTailGraphic();
 
         return MoveResult.alive(newHead, scored);
+    }
+
+    private static char chooseHeadSymbol(Direction direction) {
+        switch (direction) {
+            case UP:
+                return HEAD_U;
+            case DOWN:
+                return HEAD_D;
+            case LEFT:
+                return HEAD_L;
+            case RIGHT:
+                return HEAD_R;
+            default:
+                break;
+        }
+        throw new IllegalStateException("What kind of direction '" + direction.toString() + "' is?");
     }
 
     private int[] calculateNewPosition(int[] position, Direction direction) {
@@ -179,7 +204,7 @@ public class Snake {
     }
 
     private void updateHeadGraphics(int[] position, Direction newDirection, Direction previousDirection) {
-        if (board[position[0]][position[1]] == HEAD) {
+        if (isHead(board[position[0]][position[1]])) {
             board[position[0]][position[1]] = calculateBodySegmentChar(newDirection, previousDirection);
         }
     }
@@ -316,7 +341,7 @@ public class Snake {
                         positionSelector.debug(position);
                         System.exit(1);
                     }
-                } else if (ch == HEAD) {
+                } else if (isHead(ch)) {
                     if (!occupied) {
                         board[i][j] = 'I';
                         System.out.println(print());
@@ -359,7 +384,7 @@ public class Snake {
                 boolean isBorder = (i == 0 || i == board.length - 1 || j == 0 || j == board[i].length - 1);
                 if (i == head[0] && j == head[1]) {
                     snake.addLast(new int[] { i, j });
-                    board[i][j] = HEAD;
+                    board[i][j] = HEAD_U;
                     positionSelector.occupy(new int[] { i - 1, j - 1 });
                 } else if (isBorder) {
                     board[i][j] = BORDER;
