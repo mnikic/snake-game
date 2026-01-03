@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -181,13 +180,19 @@ public class Snake {
     }
 
     private boolean isCollision(int[] position) {
-        if (position[0] < 1 || position[0] >= board.length - 1)
-            return true;
-        if (position[1] < 1 || position[1] >= board[position[0]].length - 1)
+        if (isOutOfBounds(position))
             return true;
 
         char cell = board[position[0]][position[1]];
         return isSnake(cell) || cell > 47; // Numbers indicating digestion
+    }
+
+    private boolean isOutOfBounds(int[] position) {
+        if (position[0] < 1 || position[0] >= board.length - 1)
+            return true;
+        if (position[1] < 1 || position[1] >= board[position[0]].length - 1)
+            return true;
+        return false;
     }
 
     private void handleCollision(int[] newHead, int[] currentHead, Direction direction, Direction previousDirection) {
@@ -304,9 +309,7 @@ public class Snake {
         int maxDistance = distance(apple, currentHead);
         for (var dir : Direction.values()) {
             int[] newPosition = calculateNewPosition(apple, dir);
-            if (newPosition[0] < 1 || newPosition[0] > (board.length - 2) || newPosition[1] < 1
-                    || newPosition[1] > (board[newPosition[0]].length - 2)
-                    || Snake.isSnake(board[newPosition[0]][newPosition[1]]))
+            if (isOutOfBounds(newPosition) || Snake.isSnake(board[newPosition[0]][newPosition[1]]))
                 continue;
             int newDistance = distance(newPosition, currentHead);
             if (newDistance > maxDistance) {
