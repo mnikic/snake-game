@@ -108,6 +108,7 @@ public class Snake {
                 eatenAt = step;
             }
 
+            // Enter Ninja mouse!
             if (level > 5)
                 animateMouse(oldHead, currentHead);
             currentHead = result.newHead;
@@ -115,6 +116,7 @@ public class Snake {
         }
 
         if (level < 2) {
+            // keep it still
         } else if (level < 3)
             animateApple(oldHead, currentHead);
         else if (level <= 5)
@@ -181,10 +183,10 @@ public class Snake {
 
     private boolean isCollision(int[] position) {
         if (isOutOfBounds(position))
-            return true;
+        return true;
 
         char cell = board[position[0]][position[1]];
-        return isSnake(cell) || cell > 47; // Numbers indicating digestion
+        return isSnake(cell) || (cell > 47; // Numbers indicating digestion or body movement
     }
 
     private boolean isOutOfBounds(int[] position) {
