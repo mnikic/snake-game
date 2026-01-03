@@ -1,10 +1,10 @@
 package my.project;
 
 enum Direction {
-    UP(new int[] { -1, 0 }, "u"),
-    DOWN(new int[] { 1, 0 }, "d"),
-    LEFT(new int[] { 0, -1 }, "l"),
-    RIGHT(new int[] { 0, 1 }, "r");
+    UP(new int[] { -1, 0 }, "^"),
+    DOWN(new int[] { 1, 0 }, "v"),
+    LEFT(new int[] { 0, -1 }, "<"),
+    RIGHT(new int[] { 0, 1 }, ">");
 
     Direction(int[] delta, String text) {
         this.delta = delta;

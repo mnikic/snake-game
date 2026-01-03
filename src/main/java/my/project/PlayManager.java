@@ -14,7 +14,6 @@ public class PlayManager {
     private static int RIGHT_X = LEFT_X + WIDTH;
     private static int TOP_Y = 50;
     private static int BOTTOM_Y = TOP_Y + HEIGHT;
-    private static final Color DARK_GREEN = new Color(0, 135, 62, 200);
 
     // Game state
     private final Snake snake;
@@ -81,7 +80,6 @@ public class PlayManager {
             for (int j = 0; j < board[i].length; j++) {
                 int x = LEFT_X + (j - 1) * Block.SIZE + 3;
                 int y = TOP_Y + (i - 1) * Block.SIZE + 3;
-                int width = Block.SIZE - 6;
                 if (Snake.isSnake(board[i][j])) {
                     graphics.drawImage(drawSnakeBody(board[i][j]), x - 3, y - 3, imageLoader.getImageObserver());
                 } else if (board[i][j] == Snake.PLUS) {
@@ -136,7 +134,7 @@ public class PlayManager {
             }
 
         } else {
-            StringJoiner joiner = new StringJoiner(",");
+            StringJoiner joiner = new StringJoiner(" ");
             for (Direction direction : snake.getMoveBuffer()) {
                 joiner.add(direction.getText());
             }
