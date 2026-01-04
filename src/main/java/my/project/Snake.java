@@ -4,10 +4,12 @@ import static java.util.Arrays.asList;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -109,18 +111,14 @@ public class Snake {
             }
 
             // Enter Ninja mouse!
-            if (level > 5)
-                animateMouse(oldHead, currentHead);
+            // if (level > 5)
             currentHead = result.newHead;
             previousDirection = batch.direction;
         }
 
-        if (level < 2) {
-            // keep it still
-        } else if (level < 3)
-            animateApple(oldHead, currentHead);
-        else if (level <= 5)
-            animateMouse(oldHead, currentHead);
+        var futureMove = moveBuffer.isEmpty() ? null : moveBuffer.peek();
+        animateMouse(oldHead, currentHead, futureMove, previousDirection);
+
         lastDirection = previousDirection;
 
         System.out.println("Last move: multiplier: " + batch.multiplier + " scored: " + scored);
@@ -305,38 +303,59 @@ public class Snake {
         return Math.abs(firstPosition[0] - secondPosition[0]) + Math.abs(firstPosition[1] - secondPosition[1]);
     }
 
-    private void animateMouse(int[] oldHead, int[] currentHead) {
-        List<int[]> winners = new ArrayList<>();
-        winners.add(apple);
-        int maxDistance = distance(apple, currentHead);
+    private static final class Blah {
+        Direction dir;
+        int[] position;
+        int distance;
+
+        public int getDistance() {
+            return distance;
+        }
+    }
+
+    /**
+     * @param oldHead
+     * @param currentHead
+     * @param futureDirection
+     * @param direction
+     */
+    private void animateMouse(int[] oldHead, int[] currentHead, Direction futureDirection, Direction direction) {
+        List<Blah> winners = new ArrayList<>();
+        int currentDistance = distance(apple, currentHead);
         for (var dir : Direction.values()) {
             int[] newPosition = calculateNewPosition(apple, dir);
             if (isOutOfBounds(newPosition) || Snake.isSnake(board[newPosition[0]][newPosition[1]]))
                 continue;
             int newDistance = distance(newPosition, currentHead);
-            if (newDistance > maxDistance) {
-                winners.clear();
-                winners.add(newPosition);
-                maxDistance = newDistance;
-            } else
-                winners.add(newPosition);
+            Blah blah = new Blah();
+            blah.distance = newDistance;
+            blah.position = newPosition;
+            blah.dir = dir;
+            winners.add(blah);
         }
-        if (winners.size() == 1 && winners.get(0)[0] == apple[0] && winners.get(0)[1] == apple[1]) {
-            System.out.println("Haven't found further place");
+        winners.sort(Comparator.comparingInt(Blah::getDistance));
+        var furthest = winners.get(winners.size() - 1);
+        // Wo don't want to be any closer, just leave as is.
+        if (furthest.distance < currentDistance)
             return;
-        }
+        var dir = futureDirection == null ? direction : futureDirection;
+        var nl = winners.stream().filter(b -> b.distance == furthest.distance).filter(b -> b.dir != dir).toList();
 
-        int[] winner;
-        if (winners.size() == 1)
-            winner = winners.get(0);
-        else
-            winner = winners.get(random.nextInt(winners.size()));
+        int[] winner = furthest.position;
+        if (nl.size() == 1)
+            winner = nl.get(0).position;
+        if (nl.size() > 1) {
+            System.out.println("Choosing random");
+            winner = nl.get(random.nextInt(nl.size())).position;
+        }
 
         if (board[winner[0]][winner[1]] == ' ') {
             board[apple[0]][apple[1]] = ' ';
             board[winner[0]][winner[1]] = PLUS;
             apple[0] = winner[0];
             apple[1] = winner[1];
+        } else {
+            throw new IllegalStateException("da fuk?");
         }
     }
 
