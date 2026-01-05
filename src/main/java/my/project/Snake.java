@@ -4,12 +4,12 @@ import static java.util.Arrays.asList;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -115,7 +115,14 @@ public class Snake {
             currentHead = result.newHead;
             previousDirection = batch.direction;
         }
-        animateMouse(currentHead, 2);
+        if (level < 2) {
+            // keep it still
+        } else if (level < 3)
+            animateApple(oldHead, currentHead);
+        else if (level <= 5)
+            animateMouse(currentHead, 1);
+        else
+            animateMouse(currentHead, 2);
 
         lastDirection = previousDirection;
 
@@ -334,6 +341,8 @@ public class Snake {
                 winners.add(new Blah(dir, newPosition, newDistance));
             }
         }
+        if (winners.isEmpty())
+            return Collections.emptyList();
         winners.sort(Comparator.comparingInt(Blah::getDistance));
         var furthest = winners.get(winners.size() - 1);
         // Wo don't want to get any closer, just leave as is.
