@@ -115,9 +115,7 @@ public class Snake {
             currentHead = result.newHead;
             previousDirection = batch.direction;
         }
-
-        var futureMove = moveBuffer.isEmpty() ? null : moveBuffer.peek();
-        animateMouse(oldHead, currentHead, futureMove, previousDirection);
+        animateMouse(currentHead, 2);
 
         lastDirection = previousDirection;
 
@@ -172,11 +170,15 @@ public class Snake {
         throw new IllegalStateException("What kind of direction '" + direction.toString() + "' is?");
     }
 
-    private int[] calculateNewPosition(int[] position, Direction direction) {
+    private static int[] calculateNewPosition(int[] position, Direction direction, int depth) {
         return new int[] {
-                position[0] + direction.getDelta()[0],
-                position[1] + direction.getDelta()[1]
+                position[0] + direction.getDelta()[0] * depth,
+                position[1] + direction.getDelta()[1] * depth
         };
+    }
+
+    private int[] calculateNewPosition(int[] position, Direction direction) {
+        return calculateNewPosition(position, direction, 1);
     }
 
     private boolean isCollision(int[] position) {
@@ -308,47 +310,51 @@ public class Snake {
         int[] position;
         int distance;
 
+        Blah(Direction dir, int[] position, int distance) {
+            this.dir = dir;
+            this.position = position;
+            this.distance = distance;
+        }
+
         public int getDistance() {
             return distance;
         }
     }
 
-    /**
-     * @param oldHead
-     * @param currentHead
-     * @param futureDirection
-     * @param direction
-     */
-    private void animateMouse(int[] oldHead, int[] currentHead, Direction futureDirection, Direction direction) {
+    private List<Blah> bestChoices(int[] currentHead, int depth) {
         List<Blah> winners = new ArrayList<>();
         int currentDistance = distance(apple, currentHead);
         for (var dir : Direction.values()) {
-            int[] newPosition = calculateNewPosition(apple, dir);
-            if (isOutOfBounds(newPosition) || Snake.isSnake(board[newPosition[0]][newPosition[1]]))
-                continue;
-            int newDistance = distance(newPosition, currentHead);
-            Blah blah = new Blah();
-            blah.distance = newDistance;
-            blah.position = newPosition;
-            blah.dir = dir;
-            winners.add(blah);
+            for (int i = 0; i < depth; i++) {
+                System.out.println("in best with i=" + i);
+                int[] newPosition = calculateNewPosition(apple, dir, i + 1);
+                if (isOutOfBounds(newPosition) || Snake.isSnake(board[newPosition[0]][newPosition[1]]))
+                    continue;
+                int newDistance = distance(newPosition, currentHead);
+                winners.add(new Blah(dir, newPosition, newDistance));
+            }
         }
         winners.sort(Comparator.comparingInt(Blah::getDistance));
         var furthest = winners.get(winners.size() - 1);
-        // Wo don't want to be any closer, just leave as is.
+        // Wo don't want to get any closer, just leave as is.
         if (furthest.distance < currentDistance)
-            return;
-        var dir = futureDirection == null ? direction : futureDirection;
-        var nl = winners.stream().filter(b -> b.distance == furthest.distance).filter(b -> b.dir != dir).toList();
+            return new ArrayList<>();
+        return winners.stream().filter(b -> b.distance == furthest.distance).toList();
+    }
 
-        int[] winner = furthest.position;
-        if (nl.size() == 1)
-            winner = nl.get(0).position;
-        if (nl.size() > 1) {
-            System.out.println("Choosing random");
-            winner = nl.get(random.nextInt(nl.size())).position;
+    private void animateMouse(int[] currentHead, int maxJump) {
+        for (int i = 1; i <= maxJump; i++) {
+            List<Blah> winners = bestChoices(currentHead, i);
+            if (!winners.isEmpty()) {
+                selectOne(winners);
+                return;
+            }
         }
+        // we stay put, no allowed move is better!
+    }
 
+    private void selectOne(List<Blah> blahs) {
+        int[] winner = (blahs.size() == 1 ? blahs.get(0) : blahs.get(random.nextInt(blahs.size()))).position;
         if (board[winner[0]][winner[1]] == ' ') {
             board[apple[0]][apple[1]] = ' ';
             board[winner[0]][winner[1]] = PLUS;
